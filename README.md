@@ -138,6 +138,61 @@ med den bedste værdi fremhævet pr. række.
 **Lignende spillere.** Nærmeste nabo på de seks hovedattributter inden for samme
 position, vægtet med rating.
 
+## Holdbygger med chemistry
+
+Fanen "Holdbygger" giver en bane med 11 pladser og 10 formationer (4-4-2,
+4-3-3, 4-2-3-1, 4-3-2-1, 4-1-2-1-2, 4-4-1-1, 4-2-2-2, 3-5-2, 3-4-2-1, 5-3-2).
+Kun de 12 positioner EA's ratingsdata indeholder bruges, så der er ingen
+LWB/RWB/CF-pladser.
+
+### Chemistry-reglerne
+
+Efter FC 26/27-systemet ([kilde](https://fifauteam.com/fc-26-chemistry/)):
+
+| | 1 point | 2 point | 3 point |
+|---|---|---|---|
+| Klub | 2 | 4 | 7 |
+| Liga | 3 | 5 | 8 |
+| Nation | 2 | 5 | 8 |
+
+De tre lægges sammen og loftes ved 3 pr. spiller, altså 33 for et fuldt hold.
+
+Den regel der betyder mest: **en spiller ude af position får 0 chemistry og
+tælles heller ikke med i holdkammeraternes forbindelser.** Beregningen tæller
+derfor kun spillere der står rigtigt. Et kort markeres sølvfarvet, når det står
+ude af position.
+
+Ikoner og helte har særregler (dobbelttælling for nation henholdsvis liga), men
+de findes ikke i EA's ratings-database — den indeholder kun basisspillere. Af
+samme grund er der ingen manager-bonus.
+
+### Holdrating
+
+Gennemsnittet af de 11 ratings plus overskuddet fra spillere over gennemsnittet:
+
+```
+avg     = sum / 11
+overskud = Σ max(0, rating − avg)
+rating  = ⌊(sum + overskud) / 11⌋
+```
+
+Et hold med 10 × 80 og 1 × 90 giver 81, ikke 81,9.
+
+### Værktøjer
+
+- **Fyld bedste XI** — højest ratede spiller pr. plads uden gengangere. Pladser
+  med færrest kandidater fyldes først, så en sjælden position ikke bliver spist
+  af en tidligere plads.
+- **Optimér chemistry** — bytter gentagne gange en spiller ud med en kandidat
+  på samme position, der hæver den samlede chemistry uden at koste mere end 1 i
+  holdrating. Grådig og lokal, ikke garanteret optimal — men den finder typisk
+  33/33 fra et 90-ratet udgangspunkt og lander på 89.
+- **Kopiér link** — holdet ligger i URL'ens hash (`#view=squad&f=4-3-3&s=…`),
+  så en opstilling kan deles og genindlæses præcist.
+
+Formationsskift beholder de spillere der stadig passer på deres nye plads og
+rydder resten.
+
 Filtertilstanden ligger i URL'ens hash, så en filtreret visning kan deles —
 fx `#change=up&accel=5,6,7` for lange spillere der er steget.
 
@@ -150,7 +205,7 @@ kan filtreres uden at belaste DOM'en.
 ## Filstruktur
 
 ```
-index.html                hele appen — markup, CSS og JS i én fil
+index.html                hele appen — spillerliste, holdbygger, CSS og JS i én fil
 data/players.js           genereret datasæt (~4,5 MB, ~1,5 MB gzippet)
 tools/fetch_ratings.py    henter en årgang fra EA's drop-api
 tools/enrich_futgg.py     henter højde/vægt/accelerationstype fra FUT.GG

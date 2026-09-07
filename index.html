@@ -233,6 +233,100 @@ select:focus,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1
 .simrow .ov{font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
 .simrow .ps{font-size:11px;color:var(--muted);min-width:30px;text-align:right}
 
+/* ---------- Holdbygger ---------- */
+.viewtabs{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px}
+.viewtabs button{background:transparent;border:0;border-radius:6px;padding:7px 13px;font-size:13px;
+  font-weight:600;cursor:pointer;color:var(--muted);white-space:nowrap}
+.viewtabs button[aria-pressed="true"]{background:var(--panel);color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+
+/* Holdbyggeren er et tredje barn i .wrap's to-kolonne-grid. Uden det her
+   havner den i den 284px brede filterkolonne, og banen kollapser. */
+.wrap.squad-mode{grid-template-columns:minmax(0,1fr)}
+
+.squadwrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.pitch{
+  position:relative;aspect-ratio:3/4;margin:0 auto;
+  width:100%;max-width:620px;min-height:520px;
+  border-radius:16px;border:1px solid var(--line);
+  background:
+    linear-gradient(180deg,#0f2418,#0c1c13),
+    repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 8%,transparent 8% 16%);
+  background-blend-mode:normal;overflow:hidden;
+}
+/* Banemarkeringerne er ren pynt og må aldrig opfange klik — uden
+   pointer-events:none dækker straffesparksfeltet målmandspladsen. */
+.pitch::before,.pitch::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  border:1px solid rgba(255,255,255,.10);border-radius:2px;pointer-events:none;
+}
+.pitch::before{top:0;width:46%;height:15%;border-top:0}
+.pitch::after{bottom:0;width:46%;height:15%;border-bottom:0}
+.pitch-mid{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,.10);pointer-events:none}
+.pitch-circle{position:absolute;top:50%;left:50%;width:22%;aspect-ratio:1;transform:translate(-50%,-50%);
+  border:1px solid rgba(255,255,255,.10);border-radius:50%;pointer-events:none}
+
+.slot{
+  position:absolute;z-index:2;transform:translate(-50%,-50%);
+  width:17%;min-width:78px;max-width:104px;
+  background:0;border:0;padding:0;cursor:pointer;text-align:center;color:var(--txt);
+}
+.slot-inner{
+  display:block;
+  border-radius:10px;padding:6px 4px 5px;border:1px solid var(--line);
+  background:rgba(16,19,26,.82);backdrop-filter:blur(2px);transition:.13s;
+}
+.slot:hover .slot-inner,.slot:focus-visible .slot-inner{border-color:var(--gold);transform:translateY(-2px)}
+.slot:focus-visible{outline:none}
+.slot.filled .slot-inner{background:linear-gradient(170deg,rgba(139,111,34,.92),rgba(240,220,148,.92));color:#241d05;border-color:rgba(0,0,0,.25)}
+.slot.filled.oop .slot-inner{background:linear-gradient(170deg,rgba(93,100,112,.92),rgba(217,222,230,.9))}
+.slot-pos{display:block;font-size:10px;font-weight:800;letter-spacing:.05em;opacity:.75}
+.slot-img{width:38px;height:38px;object-fit:contain;display:block;margin:1px auto 0}
+.slot-name{display:block;font-size:10.5px;font-weight:700;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.slot-ovr{display:block;font-size:14px;font-weight:900;line-height:1}
+.slot-empty{font-size:19px;opacity:.4;padding:12px 0 11px;display:block}
+.chempips{display:flex;gap:2px;justify-content:center;margin-top:2px}
+.chempips i{width:5px;height:5px;border-radius:1px;background:rgba(0,0,0,.28);transform:rotate(45deg)}
+.chempips i.on{background:#1d7a41}
+.slot.filled .chempips i.on{background:#0f5c2e}
+.slot .rm{position:absolute;top:-6px;right:-4px;width:18px;height:18px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1;
+  cursor:pointer;display:none}
+.slot.filled:hover .rm{display:block}
+.slot .rm:hover{color:var(--danger);border-color:var(--danger)}
+
+.sq-panel{position:sticky;top:74px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.sq-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border-radius:var(--radius) var(--radius) 0 0;overflow:hidden}
+.sq-stat{background:var(--panel);padding:14px 12px;text-align:center}
+.sq-stat b{display:block;font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
+.sq-stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sq-stat.chem b{color:#4dd07a}
+.sq-body{padding:14px 16px;border-top:1px solid var(--line-soft)}
+.sq-body h3{margin:0 0 9px;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.linkrow{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px solid var(--line-soft)}
+.linkrow:last-child{border-bottom:0}
+.linkrow b{font-variant-numeric:tabular-nums}
+.linkrow .n{color:var(--muted)}
+.sq-actions{display:flex;gap:7px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line-soft)}
+.sq-actions .btn{flex:1;min-width:92px;font-size:12.5px}
+
+#pickDlg{max-width:620px}
+.pick-list{max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.pick-row{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;width:100%;
+  background:var(--panel);border:1px solid var(--line);cursor:pointer;text-align:left;color:var(--txt)}
+.pick-row:hover{border-color:var(--gold)}
+.pick-row img{width:28px;height:28px;object-fit:contain;flex:none}
+.pick-row .nm{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-row .meta{font-size:11px;color:var(--muted);white-space:nowrap}
+.pick-row .ov{font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
+.pick-row .oop{font-size:10px;color:#ffab6b;border:1px solid #6b4423;border-radius:4px;padding:1px 4px}
+
+@media (max-width:900px){
+  .squadwrap{grid-template-columns:minmax(0,1fr)}
+  .sq-panel{position:static}
+  .pitch{max-height:none}
+}
+
 .empty{padding:60px 20px;text-align:center;color:var(--muted)}
 .empty h2{color:var(--txt);margin:0 0 6px}
 .sentinel{height:1px}
@@ -319,6 +413,11 @@ code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padd
     </div>
 
     <div class="count"><b id="shown">0</b> af <b id="total">0</b> kort</div>
+
+    <div class="viewtabs" id="viewTabs">
+      <button data-view="players" aria-pressed="true">Spillere</button>
+      <button data-view="squad" aria-pressed="false">Holdbygger</button>
+    </div>
 
     <div class="sortwrap">
       <select id="sort" aria-label="Sortering">
@@ -476,10 +575,57 @@ code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padd
     <div class="sentinel" id="sentinel"></div>
     <div class="more" id="more" hidden></div>
   </main>
+
+  <!-- ============ HOLDBYGGER ============ -->
+  <main id="squadView" hidden>
+    <div class="squadwrap">
+      <div>
+        <div class="pitch" id="pitch">
+          <div class="pitch-mid"></div><div class="pitch-circle"></div>
+        </div>
+      </div>
+
+      <aside class="sq-panel">
+        <div class="sq-stats">
+          <div class="sq-stat"><b id="sqRating">—</b><span>Holdrating</span></div>
+          <div class="sq-stat chem"><b id="sqChem">0</b><span>Chemistry</span></div>
+        </div>
+
+        <div class="sq-body">
+          <h3>Formation</h3>
+          <select id="formation" style="width:100%"></select>
+        </div>
+
+        <div class="sq-body">
+          <h3>Forbindelser</h3>
+          <div id="links"><p class="hint" style="margin:0">Sæt spillere på banen for at se klub-, liga- og nationsforbindelser.</p></div>
+        </div>
+
+        <div class="sq-body">
+          <h3>Gennemsnit</h3>
+          <div id="sqAvg"><p class="hint" style="margin:0">Tomt hold.</p></div>
+        </div>
+
+        <div class="sq-actions">
+          <button class="btn btn-primary" id="sqAuto">Fyld bedste XI</button>
+          <button class="btn" id="sqOptimise">Optimér chemistry</button>
+          <button class="btn btn-ghost" id="sqClear">Ryd hold</button>
+          <button class="btn btn-ghost" id="sqShare">Kopiér link</button>
+        </div>
+
+        <p class="hint" style="padding:0 16px 14px;margin:0">
+          Chemistry efter FC 26/27-reglerne: klub 2/4/7, liga 3/5/8 og nation 2/5/8 spillere
+          giver 1/2/3 point, højst 3 pr. spiller og 33 i alt. Spillere ude af position får 0 og
+          tæller ikke med i holdkammeraternes forbindelser.
+        </p>
+      </aside>
+    </div>
+  </main>
 </div>
 
 <dialog id="detail"></dialog>
 <dialog id="cmpDlg"></dialog>
+<dialog id="pickDlg"></dialog>
 
 <div class="tray" id="tray" hidden>
   <span style="font-size:12px;color:var(--muted);white-space:nowrap">Sammenlign</span>
@@ -1262,6 +1408,360 @@ function openCompare(){
 }
 cmpDlg.addEventListener('click',function(e){ if(e.target===cmpDlg) cmpDlg.close(); });
 
+/* ================= HOLDBYGGER =================
+   Chemistry-reglerne for FC 26/27 (kilde: fifauteam.com/fc-26-chemistry):
+     klub   2/4/7 spillere -> 1/2/3 point
+     liga   3/5/8          -> 1/2/3
+     nation 2/5/8          -> 1/2/3
+   Pointene lægges sammen og loftes ved 3 pr. spiller, altså 33 for et helt hold.
+   Afgørende: en spiller ude af position får 0 OG tælles ikke med i
+   holdkammeraternes forbindelser. Derfor beregnes tællingerne kun over de
+   spillere der står rigtigt.
+   Ikoner og helte findes ikke i EA's ratings-database, så deres særregler
+   (dobbelttælling) er ikke relevante her. Manager-bonus er heller ikke med. */
+
+var CHEM_T = { club:[2,4,7], league:[3,5,8], nation:[2,5,8] };
+
+/* Formationer bruger kun de 12 positioner EA's ratingsdata indeholder.
+   Tal er procent af banens bredde/højde. */
+var FORMATIONS = {
+  '4-4-2':     [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
+                ['LM',12,46],['CM',37,50],['CM',63,50],['RM',88,46],['ST',37,15],['ST',63,15]],
+  '4-3-3':     [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
+                ['CM',50,56],['CM',24,46],['CM',76,46],['LW',15,18],['ST',50,12],['RW',85,18]],
+  '4-2-3-1':   [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
+                ['CDM',35,59],['CDM',65,59],['LM',14,35],['CAM',50,34],['RM',86,35],['ST',50,12]],
+  '4-3-2-1':   [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
+                ['CM',24,53],['CM',50,57],['CM',76,53],['CAM',32,28],['CAM',68,28],['ST',50,10]],
+  '4-1-2-1-2': [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
+                ['CDM',50,61],['CM',24,46],['CM',76,46],['CAM',50,30],['ST',37,12],['ST',63,12]],
+  '4-4-1-1':   [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
+                ['LM',12,49],['CM',37,52],['CM',63,52],['RM',88,49],['CAM',50,29],['ST',50,10]],
+  '4-2-2-2':   [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
+                ['CDM',35,59],['CDM',65,59],['CAM',15,33],['CAM',85,33],['ST',37,12],['ST',63,12]],
+  '3-5-2':     [['GK',50,92],['CB',25,76],['CB',50,79],['CB',75,76],
+                ['LM',10,50],['CM',32,53],['CDM',50,60],['CM',68,53],['RM',90,50],['ST',37,15],['ST',63,15]],
+  '3-4-2-1':   [['GK',50,92],['CB',25,76],['CB',50,79],['CB',75,76],
+                ['LM',10,49],['CM',37,53],['CM',63,53],['RM',90,49],['CAM',32,28],['CAM',68,28],['ST',50,10]],
+  '5-3-2':     [['GK',50,92],['LB',8,64],['CB',28,79],['CB',50,82],['CB',72,79],['RB',92,64],
+                ['CM',24,49],['CM',50,52],['CM',76,49],['ST',37,15],['ST',63,15]]
+};
+
+var squad = { formation:'4-3-3', ids:new Array(11).fill(null) };
+
+/* Både autofyld og optimeringen scanner efter faldende rating. P er sorteret
+   efter EA's rank, hvilket i praksis er det samme — men vi antager det ikke. */
+var BY_OVR = P.slice().sort(function(a,b){ return b[OVR]-a[OVR]; });
+
+function slots(){ return FORMATIONS[squad.formation]; }
+function squadPlayers(){ return squad.ids.map(function(id){ return id==null?null:byId[id]; }); }
+
+/* En spiller er i position hvis feltet matcher hoved- eller alternativposition. */
+function inPosition(p, pos){
+  return !!p && (p[POS]===pos || p[ALT].indexOf(pos)>=0);
+}
+
+function threshold(n, t){ return n>=t[2]?3 : n>=t[1]?2 : n>=t[0]?1 : 0; }
+
+/* Returnerer {chem:[11 tal], total, counts:{club,league,nation}} */
+function computeChem(){
+  var sl=slots(), ps=squadPlayers();
+  var ok = ps.map(function(p,i){ return inPosition(p, sl[i][0]); });
+  var club={}, league={}, nation={};
+  ps.forEach(function(p,i){
+    if(!ok[i]) return;
+    club[p[CLUB]]   = (club[p[CLUB]]||0)+1;
+    league[p[LEAGUE]]=(league[p[LEAGUE]]||0)+1;
+    nation[p[NAT]]  = (nation[p[NAT]]||0)+1;
+  });
+  var chem = ps.map(function(p,i){
+    if(!ok[i]) return 0;
+    return Math.min(3,
+      threshold(club[p[CLUB]]||0,     CHEM_T.club) +
+      threshold(league[p[LEAGUE]]||0, CHEM_T.league) +
+      threshold(nation[p[NAT]]||0,    CHEM_T.nation));
+  });
+  return {
+    chem: chem,
+    total: chem.reduce(function(a,b){return a+b;},0),
+    ok: ok,
+    counts: {club:club, league:league, nation:nation}
+  };
+}
+
+/* FUT's holdrating: gennemsnittet plus overskuddet fra spillere over det. */
+function squadRating(ps){
+  var xs=ps.filter(Boolean).map(function(p){return p[OVR];});
+  if(!xs.length) return null;
+  var n=11, total=xs.reduce(function(a,b){return a+b;},0), avg=total/n;
+  var surplus=xs.reduce(function(a,r){ return a+Math.max(0,r-avg); },0);
+  return Math.floor((total+surplus)/n);
+}
+
+/* ---------- rendering ---------- */
+var pitch=document.getElementById('pitch');
+
+function renderPitch(){
+  var sl=slots(), ps=squadPlayers(), c=computeChem();
+  pitch.querySelectorAll('.slot').forEach(function(el){ el.remove(); });
+
+  sl.forEach(function(def,i){
+    var pos=def[0], p=ps[i], oop = p && !c.ok[i];
+    var b=document.createElement('button');
+    b.className='slot'+(p?' filled':'')+(oop?' oop':'');
+    b.style.left=def[1]+'%'; b.style.top=def[2]+'%';
+    b.dataset.slot=i;
+    b.setAttribute('aria-label', pos+(p?': '+p[NAME]:': tom plads'));
+
+    var pips='<span class="chempips">'+[0,1,2].map(function(k){
+      return '<i class="'+(k<c.chem[i]?'on':'')+'"></i>'; }).join('')+'</span>';
+
+    b.innerHTML='<span class="slot-inner">'+
+      '<span class="slot-pos">'+pos+'</span>'+
+      (p ? '<img class="slot-img" src="'+portrait(p[ID])+'" alt="" loading="lazy" '+
+             'onerror="this.onerror=null;this.src=FUT_SILHOUETTE;this.style.opacity=.35">'+
+           '<span class="slot-ovr">'+p[OVR]+'</span>'+
+           '<span class="slot-name">'+esc(p[NAME])+'</span>'+pips
+         : '<span class="slot-empty">+</span>')+
+      '</span>'+(p?'<span class="rm" role="button" aria-label="Fjern">×</span>':'');
+    pitch.appendChild(b);
+  });
+
+  document.getElementById('sqChem').textContent=c.total;
+  var r=squadRating(ps);
+  document.getElementById('sqRating').textContent = r===null ? '—' : r;
+  renderLinks(c, ps);
+  syncSquadHash();
+}
+
+function renderLinks(c, ps){
+  var box=document.getElementById('links'), rows=[];
+  function block(title, counts, lookup, t){
+    var items=Object.keys(counts).map(function(k){ return [k, counts[k]]; })
+      .filter(function(x){ return x[1]>1 || threshold(x[1],t)>0; })
+      .sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+    if(!items.length) return '';
+    return '<div style="margin-bottom:11px"><div class="n" style="font-size:11px;margin-bottom:3px">'+title+'</div>'+
+      items.map(function(x){
+        var nm = lookup(x[0]);
+        return '<div class="linkrow"><span>'+esc(nm)+'</span>'+
+          '<b>'+x[1]+' <span class="n">→ '+threshold(x[1],t)+'</span></b></div>';
+      }).join('')+'</div>';
+  }
+  var html =
+    block('Klub',   c.counts.club,   function(k){ return (D.clubs[k]||['?'])[0]; },   CHEM_T.club)+
+    block('Liga',   c.counts.league, function(k){ return D.leagues[+k]||'?'; },        CHEM_T.league)+
+    block('Nation', c.counts.nation, function(k){ return (D.nations[k]||['?'])[0]; }, CHEM_T.nation);
+  box.innerHTML = html || '<p class="hint" style="margin:0">Ingen forbindelser endnu.</p>';
+
+  var filled=ps.filter(Boolean);
+  var avgBox=document.getElementById('sqAvg');
+  if(!filled.length){ avgBox.innerHTML='<p class="hint" style="margin:0">Tomt hold.</p>'; return; }
+  avgBox.innerHTML = FACE.map(function(k,i){
+    var v=Math.round(filled.reduce(function(a,p){ return a+p[STATS][FACE_IDX[i]]; },0)/filled.length);
+    return '<div class="linkrow"><span class="n">'+FACE_FULL[k]+'</span><b>'+v+'</b></div>';
+  }).join('')+'<div class="linkrow"><span class="n">Spillere</span><b>'+filled.length+'/11</b></div>';
+}
+
+/* ---------- spillervælger ---------- */
+var pickDlg=document.getElementById('pickDlg'), pickSlot=null, pickAll=false;
+
+function openPicker(i){
+  pickSlot=i; pickAll=false;
+  pickDlg.innerHTML=
+    '<button class="d-close" aria-label="Luk">×</button>'+
+    '<div style="padding:20px">'+
+      '<h2 style="margin:0 0 4px;font-size:18px">Vælg spiller til '+slots()[i][0]+'</h2>'+
+      '<p class="hint" style="margin:0 0 12px">Kun spillere der kan stå på pladsen. '+
+        'Andre får 0 chemistry og tæller ikke med for holdkammeraterne.</p>'+
+      '<input type="text" id="pickQ" placeholder="Søg navn, klub eller nation…" autocomplete="off" '+
+        'style="width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">'+
+      '<label class="psitem" style="padding-left:0;margin-top:8px">'+
+        '<input type="checkbox" id="pickAll"> Vis også spillere ude af position</label>'+
+      '<div class="pick-list" id="pickList"></div>'+
+    '</div>';
+  pickDlg.querySelector('.d-close').addEventListener('click',function(){ pickDlg.close(); });
+  var q=pickDlg.querySelector('#pickQ'), timer;
+  q.addEventListener('input',function(){ clearTimeout(timer); timer=setTimeout(renderPick,140); });
+  pickDlg.querySelector('#pickAll').addEventListener('change',function(e){
+    pickAll=e.target.checked; renderPick();
+  });
+  renderPick();
+  pickDlg.showModal();
+  q.focus();
+}
+
+function renderPick(){
+  var pos=slots()[pickSlot][0];
+  var term=norm((pickDlg.querySelector('#pickQ')||{value:''}).value.trim());
+  var used=squad.ids.filter(function(x,i){ return x!=null && i!==pickSlot; });
+  var out=[];
+  for(var i=0;i<P.length && out.length<300;i++){
+    var p=P[i];
+    if(used.indexOf(p[ID])>=0) continue;
+    var fits=inPosition(p,pos);
+    if(!fits && !pickAll) continue;
+    if(term && key(p).indexOf(term)<0) continue;
+    out.push([p,fits]);
+  }
+  out.sort(function(a,b){ return (b[1]-a[1]) || b[0][OVR]-a[0][OVR]; });
+  pickDlg.querySelector('#pickList').innerHTML = out.length ? out.map(function(r){
+    var p=r[0];
+    return '<button class="pick-row" data-pid="'+p[ID]+'">'+
+      '<img src="'+portrait(p[ID])+'" alt="" loading="lazy" '+
+        'onerror="this.onerror=null;this.src=FUT_SILHOUETTE;this.style.opacity=.3">'+
+      '<span class="nm">'+esc(p[NAME])+'</span>'+
+      '<span class="meta">'+p[POS]+' · '+esc(club(p)[0])+'</span>'+
+      (r[1]?'':'<span class="oop">ude af position</span>')+
+      '<span class="ov">'+p[OVR]+'</span></button>';
+  }).join('') : '<p class="hint">Ingen spillere matcher.</p>';
+
+  pickDlg.querySelectorAll('.pick-row').forEach(function(b){
+    b.addEventListener('click',function(){
+      squad.ids[pickSlot]=+b.dataset.pid;
+      pickDlg.close(); renderPitch();
+    });
+  });
+}
+pickDlg.addEventListener('click',function(e){ if(e.target===pickDlg) pickDlg.close(); });
+
+pitch.addEventListener('click',function(e){
+  var rm=e.target.closest('.rm');
+  if(rm){ squad.ids[+rm.parentNode.dataset.slot]=null; renderPitch(); return; }
+  var sl=e.target.closest('.slot');
+  if(sl) openPicker(+sl.dataset.slot);
+});
+
+/* ---------- formation, handlinger ---------- */
+var formSel=document.getElementById('formation');
+Object.keys(FORMATIONS).forEach(function(f){
+  var o=document.createElement('option'); o.value=f; o.textContent=f; formSel.appendChild(o);
+});
+formSel.value=squad.formation;
+formSel.addEventListener('change',function(e){
+  squad.formation=e.target.value;
+  /* Behold spillere der stadig passer på den nye plads; smid resten ud. */
+  var sl=slots();
+  squad.ids=squad.ids.map(function(id,i){
+    var p=id==null?null:byId[id];
+    return (p && inPosition(p, sl[i][0])) ? id : null;
+  });
+  renderPitch();
+});
+
+/* Bedste XI: højeste rating pr. plads, uden gengangere. Pladserne fyldes i
+   rækkefølge efter hvor få kandidater de har, så sjældne positioner ikke
+   bliver spist af en tidligere plads. */
+function autoFill(){
+  var sl=slots();
+  var pool=BY_OVR;
+  var order=sl.map(function(d,i){ return i; }).sort(function(a,b){
+    function n(i){ var c=0; for(var k=0;k<pool.length && c<40;k++) if(inPosition(pool[k],sl[i][0])) c++; return c; }
+    return n(a)-n(b);
+  });
+  var used={}, ids=new Array(11).fill(null);
+  order.forEach(function(i){
+    for(var k=0;k<pool.length;k++){
+      var p=pool[k];
+      if(used[p[ID]]) continue;
+      if(!inPosition(p, sl[i][0])) continue;
+      ids[i]=p[ID]; used[p[ID]]=1; return;
+    }
+  });
+  squad.ids=ids;
+  renderPitch();
+}
+
+/* Chemistry-optimering: bytter gentagne gange en spiller ud med en kandidat der
+   hæver den samlede chemistry uden at koste mere end 1 i holdrating. Grådig og
+   lokal — ikke en garanteret optimal løsning, men hurtig og forudsigelig. */
+function optimiseChem(){
+  var sl=slots();
+  if(squad.ids.every(function(x){ return x===null; })){ autoFill(); }
+  var best=computeChem().total, bestRating=squadRating(squadPlayers()) || 0;
+  var improved=true, rounds=0;
+
+  while(improved && rounds<6){
+    improved=false; rounds++;
+    for(var i=0;i<11;i++){
+      var cur=squad.ids[i];
+      var curP=cur==null?null:byId[cur];
+      /* Kandidater: samme position, højst 4 rating under den nuværende. */
+      var floorOvr=(curP?curP[OVR]:0)-4;
+      for(var k=0;k<BY_OVR.length;k++){
+        var q=BY_OVR[k];
+        if(q[OVR]<floorOvr) break;
+        if(squad.ids.indexOf(q[ID])>=0) continue;
+        if(!inPosition(q, sl[i][0])) continue;
+        squad.ids[i]=q[ID];
+        var c=computeChem().total, r=squadRating(squadPlayers()) || 0;
+        if(c>best && r>=bestRating-1){ best=c; bestRating=r; improved=true; break; }
+        squad.ids[i]=cur;
+      }
+    }
+  }
+  renderPitch();
+}
+
+document.getElementById('sqAuto').addEventListener('click',function(){ autoFill(); });
+document.getElementById('sqOptimise').addEventListener('click',function(){
+  var b=this; b.disabled=true; b.textContent='Optimerer…';
+  setTimeout(function(){ optimiseChem(); b.disabled=false; b.textContent='Optimér chemistry'; },20);
+});
+document.getElementById('sqClear').addEventListener('click',function(){
+  squad.ids=new Array(11).fill(null); renderPitch();
+});
+document.getElementById('sqShare').addEventListener('click',function(){
+  var b=this;
+  var done=function(ok){ b.textContent = ok?'Kopieret ✓':'Kopiér manuelt';
+    setTimeout(function(){ b.textContent='Kopiér link'; },1400); };
+  var url=location.href;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){done(true);},function(){done(false);});
+  } else done(false);
+});
+
+/* ---------- visningsskift ---------- */
+var viewTabs=document.getElementById('viewTabs');
+function setView(v){
+  var squadOn = v==='squad';
+  document.querySelector('.wrap').classList.toggle('squad-mode', squadOn);
+  document.getElementById('squadView').hidden = !squadOn;
+  document.querySelector('.wrap > main:not(#squadView)').hidden = squadOn;
+  document.getElementById('filters').style.display = squadOn ? 'none' : '';
+  document.querySelector('.search').style.visibility = squadOn ? 'hidden' : '';
+  document.querySelector('.sortwrap').style.display = squadOn ? 'none' : '';
+  document.querySelector('.count').style.display = squadOn ? 'none' : '';
+  [].forEach.call(viewTabs.children,function(c){
+    c.setAttribute('aria-pressed', c.dataset.view===v ? 'true':'false'); });
+  if(squadOn) renderPitch();
+}
+viewTabs.addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(b) setView(b.dataset.view);
+});
+
+/* ---------- holdet i URL'en ---------- */
+function syncSquadHash(){
+  if(document.getElementById('squadView').hidden) return;
+  var parts=['view=squad','f='+encodeURIComponent(squad.formation)];
+  if(squad.ids.some(Boolean)) parts.push('s='+squad.ids.map(function(x){return x==null?'':x;}).join('.'));
+  history.replaceState(null,'','#'+parts.join('&'));
+}
+function readSquadHash(){
+  var h=location.hash.slice(1); if(h.indexOf('view=squad')<0) return false;
+  h.split('&').forEach(function(pair){
+    var i=pair.indexOf('='); if(i<0) return;
+    var k=pair.slice(0,i), v=decodeURIComponent(pair.slice(i+1));
+    if(k==='f' && FORMATIONS[v]){ squad.formation=v; formSel.value=v; }
+    else if(k==='s'){
+      squad.ids=v.split('.').map(function(x){ var n=+x; return x===''||!byId[n] ? null : n; });
+      while(squad.ids.length<11) squad.ids.push(null);
+      squad.ids=squad.ids.slice(0,11);
+    }
+  });
+  return true;
+}
+
 /* ---------- Delbar URL ---------- */
 var HASH_KEYS=['q','ovrMin','ovrMax','type','gender','league','club','nation','foot','skills','weak','ageMax','hMin','change','sort'];
 function syncHash(){
@@ -1330,7 +1830,8 @@ document.getElementById('genstamp').textContent=
   Object.keys(D.clubs).length+' klubber · '+Object.keys(D.nations).length+' nationer · '+
   D.leagues.length+' ligaer.';
 
-readHash();
+if(readSquadHash()){ setView('squad'); }
+else { readHash(); }
 update();
 })();
 </script>
