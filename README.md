@@ -18,6 +18,9 @@ ikke oprette et Pages-site selv (`configure-pages` med `enablement: true` fejler
 med "Resource not accessible by integration"), så workflowet skriver til
 branchen i stedet for at bruge `deploy-pages`.
 
+`PROMPT.md` indeholder en byg-prompt der genskaber projektet fra bunden —
+inklusive alle de fælder i API'et og layoutet, der kostede tid at finde.
+
 ## Datakilder
 
 | Kilde | Bruges til | Adgang |
