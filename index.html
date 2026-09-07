@@ -125,62 +125,75 @@ select:focus,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1
   display:grid;gap:14px;
   grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));
 }
+/* Kortet er EA's egen guld-/sølv-/bronzeskabelon. Billedet er beskåret til det
+   synlige kort (406x564), og alt placeres i procent af det, så elementerne
+   sidder rigtigt uanset kortstørrelse. Delelinjen i grafikken ligger 63,3 %
+   nede — navnet står lige under den.
+   container-type gør cqw tilgængelig, så skrift skalerer med kortet. */
 .card{
-  position:relative;aspect-ratio:5/7;border:0;padding:0;cursor:pointer;
-  border-radius:12px;overflow:hidden;text-align:left;
-  background:linear-gradient(160deg,var(--c1),var(--c2) 55%,var(--c1));
-  color:var(--ct);
-  box-shadow:0 2px 10px rgba(0,0,0,.45);
-  transition:transform .14s ease,box-shadow .14s ease;
+  position:relative;aspect-ratio:406/564;border:0;padding:0;cursor:pointer;
+  text-align:left;background:0;color:#2b2205;
+  container-type:inline-size;
+  transition:transform .14s ease;
   contain:content;
 }
-.card:hover,.card:focus-visible{transform:translateY(-4px);box-shadow:0 10px 26px rgba(0,0,0,.6);outline:none}
-.card:focus-visible{box-shadow:0 0 0 2px var(--accent),0 10px 26px rgba(0,0,0,.6)}
-.card::after{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(120% 70% at 50% -10%,rgba(255,255,255,.28),transparent 60%);
+.card::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:var(--tpl) center/100% 100% no-repeat;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));
 }
-.tier-gold{--c1:#8b6f22;--c2:#f0dc94;--ct:#241d05}
-.tier-silver{--c1:#5d6470;--c2:#d9dee6;--ct:#1d2029}
-.tier-bronze{--c1:#6b4223;--c2:#d29a67;--ct:#26170b}
-.c-head{position:absolute;top:9px;left:11px;z-index:2;display:flex;flex-direction:column;align-items:center;gap:1px}
-.c-ovr{font-size:27px;font-weight:900;line-height:.95;letter-spacing:-.03em}
-.c-pos{font-size:11px;font-weight:800;letter-spacing:.04em;opacity:.8}
-.c-badges{display:flex;flex-direction:column;gap:4px;margin-top:5px;align-items:center}
-.c-badges img{width:20px;height:14px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
-.c-badges img.club{height:19px;width:19px}
-/* Portrættet skal slutte over navnebåndet — ellers lander navnet på trøjen. */
+.card:hover,.card:focus-visible{transform:translateY(-5px);outline:none}
+.card:focus-visible::before{
+  filter:drop-shadow(0 0 0 2px var(--accent)) drop-shadow(0 3px 8px rgba(0,0,0,.5));
+}
+.tier-gold{--tpl:url("assets/card-gold.webp")}
+.tier-silver{--tpl:url("assets/card-silver.webp");color:#23262d}
+.tier-bronze{--tpl:url("assets/card-bronze.webp");color:#2b1a0b}
+
+.c-head{position:absolute;left:10.5%;top:11.5%;z-index:2;text-align:center;line-height:1}
+.c-ovr{display:block;font-size:15.5cqw;font-weight:800;letter-spacing:-.03em}
+.c-pos{display:block;margin-top:1.5cqw;font-size:6.2cqw;font-weight:700;
+  letter-spacing:.04em;opacity:.85}
+
 .c-portrait{
-  position:absolute;top:4%;right:0;width:72%;height:52%;
-  object-fit:contain;object-position:bottom right;z-index:1;
-  filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));
+  position:absolute;right:1%;top:5%;width:67%;height:57%;z-index:1;
+  object-fit:contain;object-position:bottom right;
 }
 /* EA har kun renderet portrætter for en del af spillerne — resten falder
    tilbage til en silhuet, så kortet ser bevidst ud frem for i stykker. */
-.c-portrait.ph{opacity:.28;filter:none;object-position:bottom center;right:6%}
+.c-portrait.ph{opacity:.2;object-position:bottom center;right:17%;width:52%}
+
 .c-name{
-  position:absolute;left:0;right:0;bottom:33%;z-index:2;text-align:center;
-  font-size:13px;font-weight:800;letter-spacing:-.01em;
-  padding:6px 8px 5px;border-top:1px solid rgba(0,0,0,.2);
+  position:absolute;left:7%;right:7%;top:64.8%;z-index:2;text-align:center;
+  font-size:7.6cqw;font-weight:700;line-height:1.08;text-transform:uppercase;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  text-shadow:0 1px 0 rgba(255,255,255,.22);
 }
-/* Top/bottom frem for fast højde, så de to rækker fordeler sig over det
-   bånd der er tilbage under navnet — ellers står der et tomt felt. */
+
+/* To rækker à tre med etiketten over værdien, som på kortet i spillet.
+   Højderne er afstemt, så anden række slutter over badges: to rækker fylder
+   ca. 19 % af kortets højde, og fra 71 % ender de ved ca. 90 %. */
 .c-stats{
-  position:absolute;left:8%;right:8%;top:72%;bottom:5%;z-index:2;
-  display:grid;grid-template-columns:repeat(3,1fr);align-content:space-between;
-  column-gap:4px;
+  position:absolute;left:8.5%;right:8.5%;top:71%;z-index:2;
+  display:grid;grid-template-columns:repeat(3,1fr);row-gap:.6cqw;
 }
-.c-stats div{display:flex;align-items:baseline;justify-content:center;gap:3px}
-.c-stats b{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
-.c-stats i{font-style:normal;font-size:9.5px;font-weight:700;opacity:.72;letter-spacing:.03em}
+.c-stats div{display:flex;flex-direction:column;align-items:center;line-height:1.02}
+.c-stats i{font-style:normal;font-size:5cqw;font-weight:700;opacity:.75;letter-spacing:.02em}
+.c-stats b{font-size:7.8cqw;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* Nation og klub nederst, som i spillet. Skjoldet går længst ned på midten
+   (99,6 % mod 93 % ude ved kanterne), så centrerede badges har plads her. */
+.c-badges{
+  position:absolute;left:0;right:0;bottom:4%;z-index:2;
+  display:flex;justify-content:center;align-items:center;gap:7%;
+}
+.c-badges img{height:6.5cqw;width:auto;max-width:13%;object-fit:contain;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 
 .hint{margin:8px 0 0;font-size:11.5px;color:var(--muted-2);line-height:1.45}
 
 /* Ratingændring i forhold til forrige årgang */
 .c-delta{
-  position:absolute;top:9px;right:9px;z-index:3;
+  position:absolute;top:8%;right:7%;z-index:3;
   font-size:11px;font-weight:800;border-radius:6px;padding:2px 5px;
   font-variant-numeric:tabular-nums;letter-spacing:-.01em;
 }
@@ -1023,7 +1036,7 @@ function cardHTML(p){
   var st=p[STATS], gk=p[POS]==='GK', lab = gk?FACE_LABEL_GK:FACE_LABEL;
   var n=nation(p), c=club(p), s='';
   for(var i=0;i<6;i++){
-    s+='<div><b>'+st[FACE_IDX[i]]+'</b><i>'+lab[FACE[i]]+'</i></div>';
+    s+='<div><i>'+lab[FACE[i]]+'</i><b>'+st[FACE_IDX[i]]+'</b></div>';
   }
   var dv=delta(p), badge='';
   if(HAS_PREV){
@@ -1033,15 +1046,16 @@ function cardHTML(p){
   }
   return '<button class="card tier-'+tier(p[OVR])+'" data-id="'+p[ID]+'" '+
     'aria-label="'+esc(p[NAME])+', '+p[OVR]+' samlet, '+p[POS]+'">'+badge+
-    '<div class="c-head"><span class="c-ovr">'+p[OVR]+'</span><span class="c-pos">'+p[POS]+'</span>'+
-      '<span class="c-badges">'+
-        (n[1]?'<img src="'+esc(n[1])+'" alt="'+esc(n[0])+'" loading="lazy">':'')+
-        (c[1]?'<img class="club" src="'+esc(c[1])+'" alt="'+esc(c[0])+'" loading="lazy">':'')+
-      '</span></div>'+
+    '<span class="c-head"><span class="c-ovr">'+p[OVR]+'</span>'+
+      '<span class="c-pos">'+p[POS]+'</span></span>'+
     '<img class="c-portrait" src="'+portrait(p[ID])+'" alt="" loading="lazy" '+
       'onerror="this.onerror=null;this.src=FUT_SILHOUETTE;this.className+=\' ph\'">'+
     '<div class="c-name">'+esc(p[NAME])+'</div>'+
     '<div class="c-stats">'+s+'</div>'+
+    '<div class="c-badges">'+
+      (n[1]?'<img src="'+esc(n[1])+'" alt="'+esc(n[0])+'" loading="lazy">':'')+
+      (c[1]?'<img src="'+esc(c[1])+'" alt="'+esc(c[0])+'" loading="lazy">':'')+
+    '</div>'+
   '</button>';
 }
 
