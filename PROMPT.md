@@ -70,7 +70,29 @@ under loftet, og lad scriptet fejle hvis et bånd rammer loftet.
 Tag kun de tre felter herfra. Ratings og attributter kommer fra EA; to kilder
 til samme tal kan kun modsige hinanden.
 
-### 3. Billeder
+### 3. Kortskabelonen
+
+Byg ikke kortet som en CSS-gradient — brug EA's rigtige skabelon. FUT.GG's
+`rarity.imageUrls` i definition-svaret peger på guld-, sølv- og bronzekortene,
+og CDN-stien kan tvinges til fuld kvalitet og PNG med alfa:
+
+```
+.../cdn-cgi/image/quality=100,format=png,width=500/2027/rarities-level-3-large/...
+```
+
+Beskær til den ikke-gennemsigtige kasse først — filen har 12 % tom luft i
+toppen, og uden beskæringen passer CSS-forholdet ikke til det, man ser.
+Konvertér til WebP; det tager filerne fra ~450 KB til ~50 KB.
+
+Placér alt i procent af skabelonen og sæt skrift i `cqw` med
+`container-type: inline-size` på kortet, så det skalerer i ét stykke.
+Mål selv de to ting der styrer layoutet: delelinjen (63,3 % nede — navnet står
+lige under) og hvor langt skjoldet når ned ved forskellige x-positioner. Det går
+længst ned på midten, så centrerede logoer i bunden har plads. Husk at de to
+statrækker fylder ca. 19 % af kortets højde: begynder de for lavt, lander de
+oven på logoerne.
+
+### 4. Billeder
 
 ```
 https://ratings-images-prod.pulse.ea.com/FC25/full/player-portraits/p{eaId}.png?padding=0.7

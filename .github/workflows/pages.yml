@@ -30,9 +30,10 @@ jobs:
           mkdir -p _site/data
           cp index.html _site/
           cp data/players.js _site/data/
+          cp -r assets _site/
           touch _site/.nojekyll
           echo "Udgivet $(date -u +%FT%TZ) fra ${GITHUB_SHA::7}" > _site/build.txt
-          ls -la _site _site/data
+          ls -la _site _site/data _site/assets
 
       # gh-pages er en genereret branch uden egen historik at bevare, så
       # force-push er det rigtige her.

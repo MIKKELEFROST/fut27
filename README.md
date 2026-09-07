@@ -83,6 +83,25 @@ tredjeparter, og EA's egen filter-taksonomi bekræfter det
 (`playerAbilities: []`). PlayStyles-filteret skjules automatisk og dukker op af
 sig selv, når et datasæt igen har dem.
 
+### Kortgrafikken
+
+Kortene bruger EA's egne skabeloner, hentet fra FUT.GG's åbne asset-CDN og
+beskåret til det synlige kort:
+
+```
+assets/card-{gold,silver,bronze}.webp   406x564, 44-54 KB
+```
+
+Kilden har 12 % gennemsigtig luft i toppen — uden beskæringen passer CSS-forholdet
+ikke til det, man ser. WebP tager filerne fra ~450 KB til ~50 KB.
+
+Alt på kortet placeres i procent af skabelonen, og skriftstørrelser er sat i
+`cqw` med `container-type: inline-size`, så kortet skalerer i ét stykke fra
+mobil til desktop uden separate brudpunkter. To mål fra billedet styrer
+layoutet: delelinjen ligger 63,3 % nede (navnet står lige under den), og
+skjoldet går længst ned på midten — 99,6 % mod 93 % ude ved kanterne, så
+nations- og klublogo har plads centreret i bunden.
+
 ### Hvad vi ikke kan hente
 
 **Markedspriser.** FUT.GG's prisruter (`/api/fut/player-prices/…`) ligger bag
@@ -222,6 +241,7 @@ kan filtreres uden at belaste DOM'en.
 
 ```
 index.html                hele appen — spillerliste, holdbygger, CSS og JS i én fil
+assets/card-*.webp        EA's kortskabeloner (guld, sølv, bronze)
 data/players.js           genereret datasæt (~4,5 MB, ~1,5 MB gzippet)
 tools/fetch_ratings.py    henter en årgang fra EA's drop-api
 tools/enrich_futgg.py     henter højde/vægt/accelerationstype fra FUT.GG
