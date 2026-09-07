@@ -3,7 +3,20 @@
 Spillerdatabase for **EA SPORTS FC 27** — bladr i og filtrér alle 20.689
 spillerkort. Ren statisk HTML: ingen backend, ingen API-nøgle, intet build-trin.
 
-Åbn `index.html` (virker også ved at dobbeltklikke filen lokalt).
+**Live: https://mikkelefrost.github.io/fut27/**
+
+Åbn `index.html` lokalt (virker også ved at dobbeltklikke filen).
+
+## Udgivelse
+
+Siden ligger på GitHub Pages og opdateres automatisk ved hvert push til `main`
+via `.github/workflows/pages.yml`. Kun `index.html` og `data/players.js`
+udgives; `tools/` er byggeværktøj.
+
+Pages blev slået til ved at oprette `gh-pages`-branchen — Actions-tokenet må
+ikke oprette et Pages-site selv (`configure-pages` med `enablement: true` fejler
+med "Resource not accessible by integration"), så workflowet skriver til
+branchen i stedet for at bruge `deploy-pages`.
 
 ## Datakilder
 

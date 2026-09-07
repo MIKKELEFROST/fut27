@@ -5,14 +5,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# configure-pages slår Pages til på repoet ved første kørsel (enablement),
-# så der skal ikke klikkes noget i indstillingerne.
+# Pages på dette repo blev slået til ved at oprette gh-pages-branchen, og
+# kilden er derfor "deploy from a branch". Actions-tokenet må ikke oprette et
+# Pages-site (configure-pages med enablement: true fejler med "Resource not
+# accessible by integration"), så vi udgiver ved at skrive til branchen i
+# stedet for at bruge deploy-pages.
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# Én udgivelse ad gangen, og lad en igangværende gøre sig færdig.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -20,29 +20,30 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      # Kun det siden skal bruge. tools/ er byggeværktøj og hører ikke til
-      # på webstedet — det er 1 MB berigelsesdata der aldrig hentes af browseren.
+      # Kun det siden skal bruge. tools/ er byggeværktøj og hører ikke til på
+      # webstedet — blandt andet 1 MB berigelsesdata browseren aldrig henter.
       - name: Saml site
         run: |
           mkdir -p _site/data
           cp index.html _site/
           cp data/players.js _site/data/
+          touch _site/.nojekyll
           echo "Udgivet $(date -u +%FT%TZ) fra ${GITHUB_SHA::7}" > _site/build.txt
-          ls -laR _site
+          ls -la _site _site/data
 
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      # gh-pages er en genereret branch uden egen historik at bevare, så
+      # force-push er det rigtige her.
+      - name: Udgiv til gh-pages
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd _site
+          git init -q -b gh-pages
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Udgiv ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}" gh-pages
