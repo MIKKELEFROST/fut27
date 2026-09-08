@@ -758,7 +758,8 @@ var homeTab = HOME_TABS[0][0];
 function renderHome(){
   var tabs=document.getElementById('homeTabs');
   tabs.innerHTML = HOME_TABS.map(function(t){
-    return '<button class="pill'+(t[0]===homeTab?' on':'')+'" data-t="'+esc(t[0])+'">'+esc(t[0])+'</button>';
+    return '<button class="pill'+(t[0]===homeTab?' on':'')+'" data-t="'+esc(t[0])+'"'+
+      ' aria-pressed="'+(t[0]===homeTab)+'">'+esc(t[0])+'</button>';
   }).join('');
 
   var list = HOME_TABS.filter(function(t){ return t[0]===homeTab; })[0][1]().slice(0,12);
@@ -893,16 +894,20 @@ var CHIPS = [
 
 function renderChips(){
   document.getElementById('fchips').innerHTML = CHIPS.map(function(c){
-    var n=c[1](), cls = openFilter===c[0] ? 'open' : (n ? 'has' : '');
-    return '<button class="fchip '+cls+'" data-c="'+esc(c[0])+'">'+esc(c[0])+(n&&openFilter!==c[0]?' ('+n+')':'')+'</button>';
+    var n=c[1](), open = openFilter===c[0];
+    return '<button class="fchip '+(open?'open':(n?'has':''))+'" data-c="'+esc(c[0])+'"'+
+      ' aria-expanded="'+open+'">'+esc(c[0])+(n&&!open?' ('+n+')':'')+'</button>';
   }).join('');
 }
 
+/* Afkrydsningsrækkerne er knapper, ikke <input>, så tilstanden skal meldes
+   med aria-pressed — fluebenet er ren dekoration. */
 function cbList(items, selected, action, cls){
   return '<div class="cols '+(cls||'wide')+'">'+items.map(function(it){
     var on = selected.indexOf(it[0])>=0;
-    return '<button class="cbrow'+(on?' on':'')+'" data-a="'+action+'" data-v="'+esc(it[0])+'">'+
-      '<span class="cb">✓</span><span class="t">'+esc(it[1])+'</span></button>';
+    return '<button class="cbrow'+(on?' on':'')+'" data-a="'+action+'" data-v="'+esc(it[0])+'"'+
+      ' aria-pressed="'+on+'">'+
+      '<span class="cb" aria-hidden="true">✓</span><span class="t">'+esc(it[1])+'</span></button>';
   }).join('')+'</div>';
 }
 function numFld(label, act, val){
@@ -920,7 +925,8 @@ function panelHTML(name){
   var h='';
   if(name==='Positioner'){
     h+='<div class="modes">'+['Alle','Primær','Alternativ'].map(function(m){
-      return '<button class="mode'+(F.posMode===m?' on':'')+'" data-a="posmode" data-v="'+m+'">'+m+'</button>';
+      return '<button class="mode'+(F.posMode===m?' on':'')+'" data-a="posmode" data-v="'+m+'"'+
+        ' aria-pressed="'+(F.posMode===m)+'">'+m+'</button>';
     }).join('')+'</div>';
     h+='<div class="posgrid">'+POS_GROUPS.map(function(g){
       return '<div><div class="lbl">'+g[0]+'</div>'+
@@ -929,7 +935,8 @@ function panelHTML(name){
     h+='<div class="short"><span class="lbl" style="margin:0 4px 0 0;align-self:center">Genveje</span>'+
       POS_SHORTCUTS.map(function(s,i){
         var on=s[1].every(function(x){ return F.pos.indexOf(x)>=0; });
-        return '<button class="mini'+(on?' on':'')+'" data-a="posset" data-v="'+i+'">'+esc(s[0])+'</button>';
+        return '<button class="mini'+(on?' on':'')+'" data-a="posset" data-v="'+i+'"'+
+          ' aria-pressed="'+on+'">'+esc(s[0])+'</button>';
       }).join('')+'</div>';
   }
   else if(name==='Ligaer' || name==='Nationer' || name==='Klubber'){
@@ -949,7 +956,8 @@ function panelHTML(name){
             ['Uændret','0:0'],['Nedgraderet',':-1']];
     h+='<div class="short">'+QS.map(function(q){
       var on = q[1]==='ny' ? F.onlyNew : (!F.onlyNew && F.dMin+':'+F.dMax===q[1]);
-      return '<button class="mini'+(on?' on':'')+'" data-a="dquick" data-v="'+q[1]+'">'+esc(q[0])+'</button>';
+      return '<button class="mini'+(on?' on':'')+'" data-a="dquick" data-v="'+q[1]+'"'+
+        ' aria-pressed="'+on+'">'+esc(q[0])+'</button>';
     }).join('')+'</div>';
     h+='<p class="subline" style="margin-top:12px">'+nf(HAS_PREV_N)+' af '+nf(P.length)+
        ' kort findes også i FC 26. Resten er nye i FC 27.</p>';
@@ -960,7 +968,8 @@ function panelHTML(name){
             ['84–86','84:86'],['87–88','87:88'],['89+','89:']];
     h+='<div class="short">'+RQ.map(function(q){
       var on = F.ratMin+':'+F.ratMax===q[1];
-      return '<button class="mini'+(on?' on':'')+'" data-a="rquick" data-v="'+q[1]+'">'+esc(q[0])+'</button>';
+      return '<button class="mini'+(on?' on':'')+'" data-a="rquick" data-v="'+q[1]+'"'+
+        ' aria-pressed="'+on+'">'+esc(q[0])+'</button>';
     }).join('')+'</div>';
   }
   else if(name==='Tricks & ben'){
@@ -968,7 +977,8 @@ function panelHTML(name){
       [['Min. tricks','sk',F.minSk],['Min. svagt ben','wf',F.minWf]].map(function(g){
         return '<div><div class="lbl">'+g[0]+'</div><div class="range">'+
           [1,2,3,4,5].map(function(n){
-            return '<button class="mini'+(g[2]===n?' on':'')+'" style="flex:1" data-a="star'+g[1]+'" data-v="'+n+'">'+n+'★</button>';
+            return '<button class="mini'+(g[2]===n?' on':'')+'" style="flex:1" data-a="star'+g[1]+'"'+
+              ' data-v="'+n+'" aria-pressed="'+(g[2]===n)+'" aria-label="'+g[0]+' '+n+' stjerner">'+n+'★</button>';
           }).join('')+'</div></div>';
       }).join('')+'</div>';
   }
@@ -1360,7 +1370,8 @@ function renderPlayer(id){
           return '<span class="mchip"><span>'+esc(c[0])+'</span>'+esc(c[1])+'</span>'; }).join('')+'</div>'+
         '<div class="badges">'+badges.map(function(b){ return '<span class="badge">'+esc(b)+'</span>'; }).join('')+'</div>'+
         '<div class="tabs">'+P_TABS.map(function(t){
-          return '<button class="pill'+(t===pTab?' on':'')+'" data-ptab="'+t+'">'+t+'</button>'; }).join('')+'</div>'+
+          return '<button class="pill'+(t===pTab?' on':'')+'" data-ptab="'+t+'"'+
+            ' aria-pressed="'+(t===pTab)+'">'+t+'</button>'; }).join('')+'</div>'+
         body+
       '</div>'+
     '</div>'+
