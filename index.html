@@ -153,49 +153,67 @@ h1,h2,h3{margin:0}
 /* ---------- Kortet ---------- */
 .kort{
   display:flex;flex-direction:column;text-align:center;
-  position:relative;aspect-ratio:504/700;
+  /* Hver del ligger absolut i procent af kortkassen, og skriften i cqw.
+     Uden padding er 1cqw = 1 % af kortets bredde, så tal og placeringer
+     er målt i samme enhed. Alle tal herunder er aflæst på et rigtigt
+     FC-kort og omregnet fra kunstens kasse (48,83)-(458,652) til
+     kortkassen 504x700. Skjoldet står i fuld bredde 9,7-90,7 % fra 25 %
+     til 83 % nede og smalner brat efter 86 %. */
+  position:relative;display:block;aspect-ratio:504/700;
   container-type:inline-size;
-  padding:24% 15% 17%;
   background:var(--tpl) center/100% 100% no-repeat;
   color:#2E2103;
   transition:transform .14s ease;
   cursor:pointer;
 }
 .kort:hover{transform:translateY(-5px)}
-.kort.t-g{--tpl:url("assets/kort-guld.webp")}
-.kort.t-s{--tpl:url("assets/kort-soelv.webp");color:#23262D}
-.kort.t-b{--tpl:url("assets/kort-bronze.webp");color:#2B1A0B}
-.k-top{display:flex;justify-content:space-between;gap:4%}
-.k-l{padding-left:4%;text-align:center}
-.k-ovr{display:block;font-family:var(--cond);font-weight:800;font-size:16cqw;line-height:.9;letter-spacing:-.5px}
-.k-pos{display:block;font-family:var(--cond);font-weight:800;font-size:6.5cqw;margin-top:1%}
-.k-alt{display:flex;flex-direction:column;gap:4%;padding-top:6%}
-.k-alt i{
-  font-style:normal;font-family:var(--cond);font-weight:800;font-size:6cqw;
-  background:rgba(255,255,255,.4);border-radius:1.5cqw;padding:2% 9%;
-}
-.k-shot{flex:1;display:grid;place-items:center;position:relative;min-height:0}
+.kort.t-g{--tpl:url("assets/kort-guld.webp");--rule:rgba(46,33,3,.28)}
+.kort.t-s{--tpl:url("assets/kort-soelv.webp");color:#23262D;--rule:rgba(35,38,45,.3)}
+.kort.t-b{--tpl:url("assets/kort-bronze.webp");color:#2B1A0B;--rule:rgba(43,26,11,.32)}
+.kort > *{position:absolute}
+
+/* Portrættet klippes af delelinjen 63,4 % nede — samme sted som EA's eget
+   kort. Portrætterne er kvadratiske, 512x512, med hovedtop 10,7 %, hage
+   ca. 72 % og skuldrene flugtende med billedets underkant; EA's
+   padding-parameter gør intet, der findes kun det ene udsnit.
+   Billedets underkant lægges lige under delelinjen, så skuldrene altid
+   når ned til den, og bredden 60 % giver hovedet samme placering på
+   kortet som på et rigtigt FC-kort (hår ca. 26 %, hage ca. 52 % nede).
+   Toppen står i procent af klippekassen: 21,3 / 63,4 = 33,6 %. */
+.k-shot{left:0;right:0;top:0;bottom:36.6%;overflow:hidden;z-index:0}
+.k-face{position:absolute;left:20%;width:60%;top:33.6%;aspect-ratio:1;object-fit:contain;object-position:center bottom}
 .k-ini{
-  width:26cqw;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
-  font-family:var(--cond);font-weight:800;font-size:10cqw;
-  background:rgba(255,255,255,.3);border:.6cqw solid rgba(46,33,3,.28);
+  position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);
+  width:30cqw;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--cond);font-weight:800;font-size:11.5cqw;
+  background:rgba(255,255,255,.3);border:.6cqw solid var(--rule);
 }
-.k-face{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom}
-.k-shot.has-face .k-ini{visibility:hidden}
+.k-shot.has-face .k-ini{display:none}
+
+.k-l{left:17%;top:19.4%;z-index:2;text-align:center}
+.k-ovr{display:block;font-family:var(--cond);font-weight:800;font-size:12.2cqw;line-height:.86;letter-spacing:-.5px}
+.k-pos{display:block;font-family:var(--cond);font-weight:800;font-size:5.9cqw;line-height:1.15}
+.k-alt{right:12.5%;top:24.2%;z-index:2;display:flex;flex-direction:column;align-items:flex-end;gap:1.1cqw}
+.k-alt i{
+  font-style:normal;font-family:var(--cond);font-weight:800;font-size:5.3cqw;line-height:1.3;
+  background:rgba(255,255,255,.42);border-radius:1.4cqw;padding:0 1.7cqw;
+}
 .k-name{
-  font-family:var(--cond);font-weight:800;font-size:8.5cqw;line-height:1;
+  left:10%;right:10%;top:62.2%;z-index:1;text-align:center;
+  font-family:var(--cond);font-weight:800;font-size:7.4cqw;line-height:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .k-stats{
-  display:grid;grid-template-columns:repeat(6,1fr);column-gap:1%;
-  border-top:.4cqw solid rgba(46,33,3,.3);margin-top:4%;padding-top:3%;
+  left:16%;right:16%;top:68.3%;z-index:1;
+  display:grid;grid-template-columns:repeat(6,1fr);column-gap:.5%;
+  border-top:.35cqw solid var(--rule);padding-top:.9cqw;
 }
-.kort.t-s .k-stats{border-top-color:rgba(35,38,45,.3)}
-.kort.t-b .k-stats{border-top-color:rgba(43,26,11,.32)}
-.k-k{font-family:var(--cond);font-weight:800;font-size:5cqw}
-.k-v{font-family:var(--cond);font-weight:700;font-size:8cqw;line-height:1.05}
-.k-foot{display:flex;justify-content:center;gap:7%;opacity:.85;margin-top:2%}
-.k-foot i{font-style:normal;font-family:var(--cond);font-weight:800;font-size:5cqw}
+.k-k{font-family:var(--cond);font-weight:800;font-size:3.7cqw;line-height:1;text-align:center}
+.k-v{font-family:var(--cond);font-weight:700;font-size:7.2cqw;line-height:1;text-align:center;padding-top:.7cqw}
+.k-badges{left:0;right:0;top:78.6%;z-index:1;display:flex;justify-content:center;gap:3.6cqw}
+.k-badges img{width:6.3cqw;height:6.3cqw;object-fit:contain}
+.k-foot{left:0;right:0;top:85.2%;z-index:1;display:flex;justify-content:center;gap:4.5cqw;opacity:.85}
+.k-foot i{font-style:normal;font-family:var(--cond);font-weight:800;font-size:3.7cqw;line-height:1}
 
 /* ---------- Spillere ---------- */
 .crumb{font-size:13px;font-weight:600;color:var(--ink5);padding-top:26px}
@@ -725,19 +743,27 @@ function cardHTML(p){
     keys+='<span class="k-k">'+lab[i]+'</span>';
     vals+='<span class="k-v">'+st[FACE_IDX[i]]+'</span>';
   }
+  /* Nation og klub: EA's logo-URL'er er hashede og ligger i opslagstabellen.
+     Mangler et logo, udelades brikken frem for at efterlade et hul. */
+  var badges = [nation(p), club(p)].filter(function(x){ return x[1]; })
+    .map(function(x){
+      return '<img src="'+x[1]+'" alt="'+esc(x[0])+'" loading="lazy" decoding="async"'+
+             ' onerror="this.remove()">';
+    }).join('');
+
+  /* Portrættet står først, så det ligger bag rating, navn og stats. */
   return '<a class="kort t-'+tier(p[OVR])+'" href="#/spiller/'+p[ID]+'"'+
       ' aria-label="'+esc(p[NAME])+', '+p[OVR]+' '+p[POS]+'">'+
-    '<span class="k-top">'+
-      '<span class="k-l"><b class="k-ovr">'+p[OVR]+'</b><span class="k-pos">'+p[POS]+'</span></span>'+
-      '<span class="k-alt">'+p[ALT].slice(0,3).map(function(a){return '<i>'+a+'</i>';}).join('')+'</span>'+
-    '</span>'+
     '<span class="k-shot">'+
       '<span class="k-ini">'+esc(initials(p))+'</span>'+
       '<img class="k-face" src="'+portrait(p[ID])+'" alt="" loading="lazy" decoding="async"'+
         ' onload="futFace(this,1)" onerror="futFace(this,0)">'+
     '</span>'+
+    '<span class="k-l"><b class="k-ovr">'+p[OVR]+'</b><span class="k-pos">'+p[POS]+'</span></span>'+
+    '<span class="k-alt">'+p[ALT].slice(0,3).map(function(a){return '<i>'+a+'</i>';}).join('')+'</span>'+
     '<span class="k-name">'+esc(shortName(p))+'</span>'+
     '<span class="k-stats">'+keys+vals+'</span>'+
+    (badges ? '<span class="k-badges">'+badges+'</span>' : '')+
     '<span class="k-foot"><i>'+(p[FOOT]===2?'V':'H')+'</i><i>'+p[SKILLS]+'★</i><i>'+p[WEAK]+'★</i></span>'+
   '</a>';
 }

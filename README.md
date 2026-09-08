@@ -149,15 +149,37 @@ Guldkortet er filen fra handoff-pakken uændret; sølv og bronze er de tilsvaren
 EA-skabeloner lagt på samme lærred med samme forskydning, så alle tre deler
 geometri og kan bruge én og samme CSS.
 
-Alt på kortet placeres i procent af skabelonen, og skriftstørrelser er sat i
-`cqw` med `container-type: inline-size`, så kortet skalerer i ét stykke fra
-mobil til desktop uden separate brudpunkter. `padding: 24% 15% 17%` holder
-indholdet inden for skjoldet — procent-padding regnes altid ud fra bredden,
-også lodret, hvilket er præcis det, der får kortet til at skalere ensartet.
+Hver del af kortet ligger **absolut placeret i procent af kortkassen**, og
+skrift er sat i `cqw` med `container-type: inline-size`. Uden padding på
+kortet er 1 `cqw` præcis 1 % af kortets bredde, så placeringer og
+skriftstørrelser er i samme enhed, og kortet skalerer i ét stykke fra mobil til
+desktop uden brudpunkter.
 
-Portrættet hotlinkes fra EA's CDN; slår det fejl, falder kortet tilbage til en
-cirkel med spillerens initialer (`futFace()` sætter `has-face` ved `onload` og
-fjerner billedet ved `onerror`).
+Tallene er aflæst på et rigtigt FC-kort og regnet om fra kunstens kasse
+(48,83)–(458,652) til kortkassen 504×700 — `x = 9,52 + 0,8135·x_kunst`,
+`y = 11,86 + 0,8129·y_kunst`:
+
+| Del | Placering (% af kortkassen) |
+|---|---|
+| Rating (venstre) + primærposition under den | venstre 17 %, top 19,4 %, 12,2 cqw |
+| Alternative positioner (højre, stablet) | højre 12,5 %, top 24,2 %, 5,3 cqw |
+| Portræt | bredde 60 %, klippet ved delelinjen 63,4 % |
+| Navn | top 62,2 %, 7,4 cqw |
+| Statlinjer | 16–84 %, top 68,3 %, etiket 3,7 cqw, tal 7,2 cqw |
+| Nations- og klublogo | top 78,6 %, 6,3 cqw |
+| Fod, tricks, svag fod | top 85,2 %, 3,7 cqw |
+
+Skjoldet står i fuld bredde (9,7–90,7 %) fra 25 % til 83 % nede og smalner brat
+efter 86 % — derfor er der ikke plads til mere under fodrækken.
+
+Portrættet hotlinkes fra EA's CDN. Billederne er 512×512 med hovedtop ved
+10,7 %, hage ved ca. 72 % og skuldrene flugtende med underkanten;
+`padding`-parameteren på CDN'et gør ingen forskel, der findes kun det ene
+udsnit. Underkanten lægges lige under delelinjen, så skuldrene altid når ned
+til den, og bredden 60 % giver hovedet samme placering på kortet som på et
+rigtigt FC-kort. Slår billedet fejl, falder kortet tilbage til en cirkel med
+spillerens initialer (`futFace()` sætter `has-face` ved `onload` og fjerner
+billedet ved `onerror`).
 
 ## Hvorfor er data bundlet i stedet for hentet live?
 

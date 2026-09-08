@@ -88,16 +88,29 @@ for alle tre niveauer og læg kunsten samme sted på det — ellers skal hver
 skabelon have sin egen geometri. Her: 504×700 med kunsten i
 (48, 83)–(458, 652).
 
-Placér alt i procent af skabelonen og sæt skrift i `cqw` med
-`container-type: inline-size` på kortet, så det skalerer i ét stykke.
-`padding: 24% 15% 17%` holder indholdet inden for skjoldet. Bemærk at
-procent-padding **altid** regnes ud fra bredden, også `padding-top` og
-`padding-bottom` — det er præcis derfor kortet skalerer ensartet, men også
-derfor tallene ikke ligner de lodrette procenter, man måler i billedet.
+Placér **hver del absolut i procent af kortkassen** og sæt skrift i `cqw` med
+`container-type: inline-size` på kortet. Giv kortet ingen padding: så er
+1 `cqw` præcis 1 % af kortets bredde, og placeringer og skriftstørrelser er i
+samme enhed. (Med padding er `cqw` 1 % af *indholdskassen*, ikke af kortet —
+en let overset kilde til at alt bliver for lille.)
+
+Mål tallene på et rigtigt kort frem for at gætte, og regn dem om fra kunstens
+kasse til kortkassen. De vigtigste: delelinjen 63,4 % nede, rating og
+primærposition til venstre fra 19,4 %, alternative positioner stablet til
+højre fra 24,2 %, navnet lige under delelinjen, statlinjerne fra 68,3 % og
+logoer fra 78,6 %. Skjoldet står i fuld bredde fra 25 % til 83 % og smalner
+brat efter 86 %.
 
 Hotlink portrættet og fald tilbage til en cirkel med initialer, når det slår
 fejl: `onload` markerer beholderen, `onerror` fjerner billedet. En transparent
 PNG dækker ikke selv en cirkel bagved, så det skal styres i kode, ikke i CSS.
+Portrættet skal ligge **først** i kortet, så rating, navn og stats tegnes oven
+på det, og klippes af en beholder der slutter ved delelinjen — så fylder
+billedet kortet ud som på et rigtigt kort i stedet for at sidde i en lille
+firkant på midten. EA's portrætter er 512×512 med spilleren flugtende med
+underkanten, og `padding`-parameteren på CDN'et gør ingen forskel; anker
+billedets underkant lige under delelinjen og styr størrelsen med bredden
+alene.
 
 ### 4. Billeder
 
@@ -322,6 +335,12 @@ efterjusterer, så brug dem som størrelsesorden, ikke som facit:
 **Test chemistry uafhængigt af din egen kode:** tæl de grønne diamanter i
 DOM'en og sammenlign med det viste total. De skal stemme, og totalen må aldrig
 overstige 33. Efterregn desuden et par spillere i hånden mod tærskeltabellen.
+
+**Skaf de rigtige skrifter og billeder ind i testbrowseren.** Kan sandkassen
+ikke nå Google Fonts og EA's CDN, så hent filerne med curl og server dem fra
+disk via `page.route()`. Uden det måler man en reserveskrifts proportioner og
+retter det forkerte — kortets tal er sat efter Barlow Condensed, hvis
+versalhøjde er 0,72 em.
 
 **Tag screenshots og kig på dem.** Fem fejl i det her projekt var usynlige i
 koden og åbenlyse på et billede:
