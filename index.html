@@ -689,17 +689,19 @@ function statColor(v){
   return v>=90?'#3DDC84' : v>=80?'#9BD94F' : v>=70?'#5AA6FF' : v>=60?'#FF9A3D' : '#F0554E';
 }
 
-/* Kortnavnet: efternavn(e). Nogle spillere kendes på noget andet. */
-var SHORT_OVERRIDE = {
-  'Vinícius Júnior':'Vini Jr.', 'Caroline Graham Hansen':'G. Hansen',
-  'Rodri':'Rodri', 'Pedri':'Pedri', 'Gavi':'Gavi', 'Lamine Yamal':'Yamal',
-  'Alexia Putellas':'Putellas', 'Aitana Bonmatí':'Bonmatí'
-};
+/* Kortnavnet er efternavnet, altså alt efter fornavnet. To undtagelser:
+   navne der kun består af ét ord (Rodri, Pedri) står som de er, og navne hvor
+   resten kun er et suffiks — "Vini Jr." må ikke blive til "Jr.". EA skriver i
+   forvejen kaldenavnet i NAME, så listen med undtagelser er kort. */
+var SHORT_OVERRIDE = { 'Caroline Graham Hansen':'G. Hansen' };
+var NAME_SUFFIX = /^(jr\.?|junior|j[uú]nior|ii|iii)$/i;
 function shortName(p){
   var n=p[NAME];
   if(SHORT_OVERRIDE[n]) return SHORT_OVERRIDE[n];
   var parts=n.trim().split(/\s+/);
-  return parts.length<2 ? n : parts.slice(1).join(' ');
+  if(parts.length<2) return n;
+  var tail=parts.slice(1).join(' ');
+  return NAME_SUFFIX.test(tail) ? n : tail;
 }
 function initials(p){
   var parts=p[NAME].trim().split(/\s+/);
