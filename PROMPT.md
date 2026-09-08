@@ -11,8 +11,11 @@ noget der ser rigtigt ud og er forkert.
 
 ## Prompten
 
-> Byg en statisk hjemmeside der viser hele spillerdatabasen fra EA SPORTS FC 27
-> og lader brugeren filtrere i den og bygge et hold med chemistry.
+> Byg en statisk hjemmeside — "FIFA Centralen" — der viser hele
+> spillerdatabasen fra EA SPORTS FC 27 og lader brugeren filtrere i den, slå
+> enkeltkort op og bygge et hold med chemistry. Fire skærme bag hash-routing:
+> forside (`#/`), database (`#/spillere`), spillerside (`#/spiller/:id`) og
+> squad builder (`#/hold`).
 >
 > Ingen backend, ingen API-nøgle, intet build-trin. Slutresultatet er
 > `index.html` + én genereret datafil, som kan hostes på GitHub Pages og også
@@ -80,17 +83,21 @@ og CDN-stien kan tvinges til fuld kvalitet og PNG med alfa:
 .../cdn-cgi/image/quality=100,format=png,width=500/2027/rarities-level-3-large/...
 ```
 
-Beskær til den ikke-gennemsigtige kasse først — filen har 12 % tom luft i
-toppen, og uden beskæringen passer CSS-forholdet ikke til det, man ser.
-Konvertér til WebP; det tager filerne fra ~450 KB til ~50 KB.
+Konvertér til WebP; det tager filerne fra ~450 KB til ~50 KB. Vælg ét lærred
+for alle tre niveauer og læg kunsten samme sted på det — ellers skal hver
+skabelon have sin egen geometri. Her: 504×700 med kunsten i
+(48, 83)–(458, 652).
 
 Placér alt i procent af skabelonen og sæt skrift i `cqw` med
 `container-type: inline-size` på kortet, så det skalerer i ét stykke.
-Mål selv de to ting der styrer layoutet: delelinjen (63,3 % nede — navnet står
-lige under) og hvor langt skjoldet når ned ved forskellige x-positioner. Det går
-længst ned på midten, så centrerede logoer i bunden har plads. Husk at de to
-statrækker fylder ca. 19 % af kortets højde: begynder de for lavt, lander de
-oven på logoerne.
+`padding: 24% 15% 17%` holder indholdet inden for skjoldet. Bemærk at
+procent-padding **altid** regnes ud fra bredden, også `padding-top` og
+`padding-bottom` — det er præcis derfor kortet skalerer ensartet, men også
+derfor tallene ikke ligner de lodrette procenter, man måler i billedet.
+
+Hotlink portrættet og fald tilbage til en cirkel med initialer, når det slår
+fejl: `onload` markerer beholderen, `onerror` fjerner billedet. En transparent
+PNG dækker ikke selv en cirkel bagved, så det skal styres i kode, ikke i CSS.
 
 ### 4. Billeder
 
@@ -129,6 +136,13 @@ Ellers vil en ændring hos EA stille og roligt give et forældet datasæt.
 skjuler sig selv når data mangler, frem for at vise tomme felter — og lad dem
 komme tilbage af sig selv, når et fremtidigt datasæt har dem.
 
+**Byg ikke en flade på data du ikke har.** Får du et design, der forudsætter
+priser, PlayStyles eller sæsonstatistik, så erstat fladen med noget ægte frem
+for at opdigte tal eller lade knappen stå død. Ratingspringet FC 26 → FC 27 er
+et godt bytte for en prisflade: det er rigtig historik, det har samme form
+(tal + fortegn + farve), og ingen af prissiderne har det. Skriv i README hvad
+der blev byttet ud og hvorfor.
+
 **Målmænd bruger de samme seks felter.** `pac/sho/pas/dri/def/phy` indeholder
 for målmænd DIV/HAN/KIC/REF/SPE/POS. Skift kun etiketterne.
 
@@ -160,40 +174,62 @@ eller berigelse bygges datasættet stadig, og siden skjuler bare funktionerne.
 
 ## Funktioner
 
-### Spillerliste
+### Forside
 
-Kortgrid i FUT-stil: rating, position, nations- og klublogo, portræt,
-navn og de seks hovedattributter. Guld/sølv/bronze efter rating (75+/65+/derunder).
+Hero med søgefelt, et grid på 12 kort med skiftende vinkel (højeste rating,
+største spring, nye i årgangen, kvindefodbold, målmænd) og to lister: største
+ratingspring og højeste rating. Hver vinkel skal kunne beregnes ud fra data,
+der faktisk findes — ellers hører fanen ikke hjemme der.
 
-Ratingændringen siden forrige årgang vises som et badge på kortet — grønt ved
-stigning, rødt ved fald, "NY" for spillere der ikke fandtes sidste år.
+### Database
 
-**Filtre:** fritekst (accent-ufølsom, så "mbappe" finder "Mbappé"),
-rating-interval, position med valgfri medregning af alternativpositioner,
-spillerkategori, køn, liga, klub, nation, foretrukken fod, tricks, svag fod,
-maksimal alder, minimumshøjde, accelerationstype, ændring siden forrige årgang,
-minimumskrav på hver af de seks hovedattributter, og PlayStyles når de findes.
+Filterbjælke øverst: navnefelt, sortering, "nulstil alt", og ni chips der hver
+åbner ét panel ad gangen. Chippen har tre tilstande — åben, har værdi (med
+antal), tom — og aktive filtre gentages som piller, man kan fjerne enkeltvis.
 
-**Sortering:** rating, hver hovedattribut, tricks, svag fod, alder, navn,
-største stigning og største fald.
+| Panel | Indhold |
+|---|---|
+| Positioner | Alle/Primær/Alternativ + 12 positioner i tre grupper, med genveje |
+| Ligaer · Nationer · Klubber | søgbare afkrydsningslister (63 / 164 / 755) |
+| Ratingspring | min/maks + hurtigvalg, inkl. "nye i årgangen" |
+| Rating | min/maks + hurtigvalg pr. kortniveau |
+| Tricks & ben | 1★–5★ for hver |
+| Stats | min/maks på hver af de seks hovedattributter |
+| Krop & løb | løbestil, fod, herre-/kvindefodbold, højde, alder |
+
+Fritekstsøgning er accent-ufølsom ("mbappe" finder "Mbappé") og dækker navn,
+klub, nation, liga og position. Filtre kombineres med OG; værdier inden for ét
+filter med ELLER.
+
+Resultattabel: ratingbrik, navn + klub/nation, position + alternativer, de seks
+hovedattributter i farvede kasser, og forrige årgangs rating med ændringen.
+15 rækker ad gangen med en "vis flere"-knap — 20.689 kort i DOM'en er ikke en
+mulighed.
 
 Hvor et filter bygger på delvis data, så skriv dækningsgraden ved filteret.
 Brugeren skal ikke gætte på, om filteret er i stykker.
 
-**Detaljevisning:** alle 40 attributter grupperet med søjler, ratingændringen,
-PlayStyles med beskrivelser når de findes, og lignende spillere (nærmeste nabo
-på hovedattributterne inden for samme position, vægtet med rating).
+### Spillerside
 
-**Sammenligning** af op til fire spillere over alle attributter med den bedste
-værdi fremhævet pr. række.
+Kortet i fuld størrelse, en udviklingsboks (forrige → nuværende årgang) og fire
+faner:
 
-Filtertilstanden skal ligge i URL'ens hash, så en filtreret visning kan deles.
+- **Egenskaber** — alle 40 attributter i grupper med søjler. Gruppens total er
+  EA's egen ansigtsstat, ikke et gennemsnit af undergrupperne. Målmænd får egne
+  grupper og deres egen nævner i "samlede egenskaber" (34 attributter mod 29).
+- **Udvikling** — forrige årgang, ændringen, og placering samlet, på positionen,
+  i ligaen og blandt landsmænd.
+- **Kemistile** — de tolv stile med de ansigtsstats, hver løfter, og de tre
+  markeret der passer kortets stærkeste sider. Skriv i brugerfladen at det er
+  en udledning, ikke hentet data.
+- **Profil** — fødselsdato, alder, krop, løbestil, EA-plads, id.
 
-**Ydelse:** rendér kortene i portioner via en `IntersectionObserver` frem for
-at lægge 20.689 i DOM'en. Genobservér sentinelen efter hver portion — ellers
-stopper uendelig scroll, hvis sentinelen stadig er synlig efter en render.
+Nedenunder fire lignende kort: samme position, tættest på rating, samme køn
+foretrukket.
 
-### Holdbygger
+Filtertilstand og opstilling skal ligge i URL'ens hash, så en visning kan deles.
+
+### Squad Builder
 
 Bane med 11 pladser og mindst 10 formationer. Brug kun de 12 positioner EA's
 data indeholder (GK, CB, LB, RB, CDM, CM, CAM, LM, RM, LW, RW, ST) — der er
@@ -243,12 +279,19 @@ opstillingen i URL-hashen.
 
 ## Design
 
-Mørkt, roligt, informationstæt. Guld som accent. Alt i én HTML-fil med egen CSS
-— ingen framework, ingen CDN-afhængighed.
+Mørkt, roligt, informationstæt. Blå accent (`#5AA6FF` til tekst og tal,
+`#1B62C4` til aktive flader) på næsten sort (`#0A0B0D`) med paneler i
+`#0D1420`. Barlow Condensed til overskrifter og alle tal, Manrope til brødtekst.
+Alt i én HTML-fil med egen CSS — intet framework, kun Google Fonts udefra.
 
-Filterpanel til venstre, resultater til højre, aktive filtre som chips man kan
-fjerne enkeltvis. Responsivt ned til 390 px, hvor filterpanelet bliver en
-skuffe. Ingen vandret scroll på noget tidspunkt.
+Læg farverne i CSS-variabler ét sted og lad ingen komponent hardkode en hex.
+Statfarver efter værdi: 90+ grøn, 80+ limegrøn, 70+ blå, 60+ orange, derunder
+rød; rammer er samme hex med `55` i alfa.
+
+Én flydende opsætning uden faste bredder, bortset fra spillersidens kort
+(340 px) og tabellens `min-width: 820px`, som scroller vandret i sin egen
+beholder. Verificér ved ~380 px, ~768 px og ≥1320 px. Ingen vandret scroll på
+`body` på noget tidspunkt.
 
 ---
 
@@ -280,23 +323,35 @@ efterjusterer, så brug dem som størrelsesorden, ikke som facit:
 DOM'en og sammenlign med det viste total. De skal stemme, og totalen må aldrig
 overstige 33. Efterregn desuden et par spillere i hånden mod tærskeltabellen.
 
-**Tag screenshots og kig på dem.** Tre fejl i det her projekt var usynlige i
+**Tag screenshots og kig på dem.** Fem fejl i det her projekt var usynlige i
 koden og åbenlyse på et billede:
 
 1. Banen kollapsede til 2×3 pixels, fordi holdbyggeren var et tredje barn i et
    to-kolonne-grid. Brug `minmax(0,1fr)`, så en bred celle ikke kan sprænge en
    kolonne.
-2. Målmandspladsen kunne ikke klikkes, fordi banens dekorative
+2. Banen kollapsede igen — denne gang til 2×2 — da den fik `max-width` og
+   `margin: 0 auto`. Auto-margener i inline-aksen slår gitterelementets
+   stretch fra, så et element med kun absolut placerede børn krymper til sine
+   rammer. Sæt `width: 100%` ved siden af.
+3. Målmandspladsen kunne ikke klikkes, fordi banens dekorative
    straffesparksfelt blev malet oven på den. Giv rene pyntelag
    `pointer-events: none`.
-3. Vandret scroll på mobil, fordi spillernavnet lå i en `<span>`. Inline-elementer
+4. Vandret scroll på mobil, fordi spillernavnet lå i en `<span>`. Inline-elementer
    kan ikke klippe tekst — `overflow: hidden` og ellipsis virker først med
    `display: block`, og uden det sætter det længste navn min-content-bredden på
    hele gridkolonnen.
+5. Afkrydsningsrækkerne var `<button>` uden `background`/`border` i deres egen
+   regel, så de arvede browserens knapstil og blev næsten ulæselige. En global
+   `button { font: inherit; color: inherit }` nulstiller ikke ramme og
+   baggrund — hver knapklasse skal selv sætte dem.
 
-Den samme klasse af fejl gik igen tre gange: **et element hvis kasse ikke passer
-til dets indhold.** Mål geometrien i browseren, når noget opfører sig mærkeligt,
-frem for at gætte ud fra CSS'en.
+Den samme klasse af fejl gik igen: **et element hvis kasse ikke passer til dets
+indhold.** Mål geometrien i browseren (`getBoundingClientRect`), når noget
+opfører sig mærkeligt, frem for at gætte ud fra CSS'en.
+
+Vær også opmærksom på **klassenavne der kolliderer**: `.dl` som både
+definitionsliste og delta-celle gav den ene komponent den andens ramme. I én
+stor fil er der ingen scoping til at fange det.
 
 ---
 

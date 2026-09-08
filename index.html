@@ -1,690 +1,584 @@
-<!-- fut27 — EA SPORTS FC 27 spillerdatabase -->
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="da">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>fut27 | EA SPORTS FC 27 spillerdatabase</title>
-<meta name="description" content="Demo: bladr i og filtrér alle 20.689 EA SPORTS FC 27-spillerkort. Bygget på EA's åbne ratings-API, uden backend og uden API-nøgle.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0f'/%3E%3Cpath d='M9 7h14v4h-9v4h8v4h-8v6H9z' fill='%23e8c96a'/%3E%3C/svg%3E">
+<title>FIFA Centralen — EA FC 27 kortdatabase</title>
+<meta name="description" content="Dansk EA FC 27-database. Ratings, egenskaber og meta på alle 20.689 kort, direkte fra EA's officielle ratings-API.">
+<link rel="icon" href="assets/logo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* ==========================================================================
+   FIFA Centralen — designtokens fra handoff-pakken.
+   Alle farver bor her; ingen komponent hardkoder en hex uden for denne blok
+   (undtagen kortenes blæk, der hører til hver skabelons kunst).
+   ========================================================================== */
 :root{
-  --bg:#0a0b0f; --bg-2:#12141c; --panel:#161923; --panel-2:#1d2130;
-  --line:#262b3a; --line-soft:#1f2431;
-  --txt:#eef0f6; --muted:#8d94aa; --muted-2:#5f6679;
-  --gold:#e8c96a; --gold-dim:#b99b3f;
-  --accent:#4da3ff; --danger:#ff6b6b;
-  --card-w:190px;
-  --radius:14px;
+  --bg:#0A0B0D; --panel:#0D1420; --input:#101724; --fpanel:#0A1120;
+  --line:#1B2740; --line-in:#1E2C47; --line-strong:#2A3A55;
+  --rule:#181B22; --rule-p:#16233A; --rule-t:#1E222A; --rule-r:#191C23;
+  --thead:#0D1015;
+  --acc:#5AA6FF; --acc-l:#8CC2FF; --acc-s:#1B62C4; --acc-sh:#2C7BE0;
+  --acc-b:#3D86E0; --acc-t:#12243D; --acc-tb:#2E5F9E;
+  --navy:#0C2340; --navy-b:#1D4E8F;
+  --ink:#EDEFF2; --ink2:#C9D0DB; --ink3:#A7AEBA; --ink4:#8B93A0;
+  --ink5:#7C8492; --ink6:#6B7280; --rank:#69717D;
+  --hover:#151920; --hover-c:#141E30;
+  --good:#3DDC84; --bad:#F0554E;
+  --track:#1B1E25;
+  --cond:'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{-webkit-text-size-adjust:100%}
 body{
-  margin:0;background:var(--bg);color:var(--txt);
-  font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  -webkit-font-smoothing:antialiased;
+  margin:0; background:var(--bg); color:var(--ink);
+  font:400 15px/1.5 'Manrope', system-ui, -apple-system, sans-serif;
 }
+a{color:inherit;text-decoration:none}
 button,input,select{font:inherit;color:inherit}
-a{color:var(--accent)}
+h1,h2,h3{margin:0}
+.wrap{max-width:1320px;margin:0 auto;padding:0 18px}
+[hidden]{display:none !important}
+.n{color:var(--ink5)}
 
-/* ---------- Topbar ---------- */
-.topbar{
-  position:sticky;top:0;z-index:40;
-  background:rgba(10,11,15,.86);backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--line);
+/* ---------- Header ---------- */
+.hd{
+  position:sticky; top:0; z-index:40;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  padding:12px 18px;
+  background:rgba(13,15,19,.96); backdrop-filter:blur(10px);
+  border-bottom:1px solid #23262E;
 }
-.topbar-in{
-  max-width:1680px;margin:0 auto;padding:12px 18px;
-  display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+.hd-brand{display:flex;align-items:center;gap:10px}
+.hd-brand img{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid #2E7BE0}
+.mark{font-family:var(--cond);font-size:23px;font-weight:800;font-style:italic;letter-spacing:.5px;white-space:nowrap}
+.mark b{color:var(--acc);font-weight:800}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nav a{padding:7px 12px;border-radius:8px;font-size:14px;font-weight:700;color:var(--ink2)}
+.nav a:hover{background:#1A1E26;color:#fff}
+.nav a.on{color:var(--acc);background:#1A1E26}
+.hd-search{
+  flex:1 1 200px; min-width:0; display:flex; align-items:center; gap:8px;
+  background:var(--input); border:1px solid var(--line-in); border-radius:10px; padding:0 10px;
 }
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
-.brand .dot{width:10px;height:10px;border-radius:3px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));box-shadow:0 0 14px rgba(232,201,106,.5)}
-.brand small{display:block;font-weight:500;font-size:11px;color:var(--muted);letter-spacing:0}
-.search{position:relative;flex:1 1 260px;min-width:200px}
-.search input{
-  width:100%;padding:10px 14px 10px 36px;border-radius:10px;
-  background:var(--panel);border:1px solid var(--line);outline:none;
+.hd-search .gl{color:var(--ink6)}
+.hd-search input{flex:1;min-width:0;background:0;border:0;outline:none;padding:9px 0}
+.hd-search input::placeholder{color:var(--ink6)}
+.tag27{
+  font-family:var(--cond);font-size:13px;font-weight:700;color:var(--acc);
+  background:var(--navy);border:1px solid var(--navy-b);border-radius:6px;padding:2px 7px;
 }
-.search input:focus{border-color:var(--accent)}
-.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5}
-.count{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px}
-.count b{color:var(--txt)}
-.sortwrap{display:flex;align-items:center;gap:6px}
-select,.btn{
-  background:var(--panel);border:1px solid var(--line);border-radius:9px;
-  padding:9px 11px;cursor:pointer;
+.hd-about{
+  background:0;border:1px solid #262A33;border-radius:9px;padding:8px 13px;
+  font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer;white-space:nowrap;
 }
-select:focus,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.btn:hover{border-color:var(--muted-2)}
-.btn-ghost{background:transparent}
-.sidebar-toggle{display:none}
+.hd-about:hover{border-color:var(--acc);color:var(--acc)}
 
-/* ---------- Layout ---------- */
-.wrap{max-width:1680px;margin:0 auto;padding:18px;display:grid;grid-template-columns:284px 1fr;gap:20px;align-items:start}
+/* ---------- Forside ---------- */
+.hero{
+  padding:56px 18px 44px; text-align:center; border-bottom:1px solid var(--rule-p);
+  background:
+    radial-gradient(900px 400px at 50% -60px, rgba(46,123,224,.28), transparent 72%),
+    linear-gradient(#0B1220, #08090C);
+}
+.hero-in{max-width:1100px;margin:0 auto}
+.hero img.logo{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid #2E7BE0;box-shadow:0 12px 40px rgba(46,123,224,.35)}
+.hero h1{font-family:var(--cond);font-size:clamp(44px,8vw,86px);font-weight:800;font-style:italic;line-height:.92;letter-spacing:-1px;margin:18px 0 6px}
+.hero h1 b{color:var(--acc);font-weight:800}
+.tagline{font-family:var(--cond);font-size:clamp(16px,2.6vw,24px);font-weight:700;font-style:italic;text-transform:uppercase;letter-spacing:1.5px;color:var(--acc-l)}
+.hero p.sub{color:var(--ink3);margin:12px 0 0}
+.hero-search{display:flex;gap:10px;flex-wrap:wrap;max-width:640px;margin:22px auto 0}
+.hero-search .fld{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:var(--input);border:1px solid var(--line-in);border-radius:10px;padding:0 12px}
+.hero-search .fld input{flex:1;min-width:0;background:0;border:0;outline:none;padding:12px 0}
+.hero-search .fld input::placeholder{color:var(--ink6)}
+.btn-p{background:var(--acc-s);color:#fff;border:0;border-radius:10px;padding:12px 24px;font-weight:800;cursor:pointer}
+.btn-p:hover{background:var(--acc-sh)}
+.pop{margin-top:16px;font-size:14px;color:var(--ink5);display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.pop #popNames{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.pop a{color:var(--ink2);border-bottom:1px dotted #3A4048}
+.pop a:hover{color:var(--acc);border-color:var(--acc)}
 
-/* ---------- Filters ---------- */
-.filters{
-  position:sticky;top:74px;max-height:calc(100vh - 92px);overflow-y:auto;
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:4px 0;
+.sec{padding:38px 0 0}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.sec-head h2{font-family:var(--cond);font-size:30px;font-weight:800;text-transform:uppercase;letter-spacing:.3px}
+.sec-head .sub{color:var(--ink5);font-size:14px;margin-top:2px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{
+  background:var(--input);color:var(--ink2);border:1px solid var(--line-in);
+  border-radius:999px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;
 }
-.filters::-webkit-scrollbar{width:8px}
-.filters::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
-.fgroup{border-bottom:1px solid var(--line-soft);padding:14px 16px}
-.fgroup:last-child{border-bottom:0}
-.fgroup h3{
-  margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--muted);
+.pill:hover{border-color:var(--acc);color:var(--acc)}
+.pill.on{background:var(--acc-s);border-color:var(--acc-s);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:16px}
+.center{text-align:center;padding:26px 0 0}
+.ghost{
+  background:0;border:1px solid #2E333D;border-radius:10px;padding:11px 20px;
+  font-size:14px;font-weight:700;color:var(--ink2);cursor:pointer;
 }
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{
-  padding:5px 9px;border-radius:7px;font-size:12px;font-weight:600;
-  background:var(--panel-2);border:1px solid var(--line);cursor:pointer;
-  transition:.12s;
+.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:38px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.p-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px 13px}
+.p-head h3{font-family:var(--cond);font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.p-head .r{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--ink5)}
+.p-head a.r:hover{color:var(--acc)}
+.p-row{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:11px 18px;border:0;border-top:1px solid var(--rule-r);background:0;cursor:pointer;
 }
-.chip:hover{border-color:var(--muted-2)}
-.chip[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#14161d}
-.seg{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px}
-.seg button{flex:1;background:transparent;border:0;border-radius:6px;padding:6px 4px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--panel);color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.4)}
-.field{margin-bottom:10px}
-.field:last-child{margin-bottom:0}
-.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
-.field input[type=text],.field select{
-  width:100%;background:var(--panel-2);border:1px solid var(--line);
-  border-radius:8px;padding:8px 10px;outline:none;
-}
-.field input[type=text]:focus,.field select:focus{border-color:var(--accent)}
-.rangerow{display:flex;align-items:center;gap:8px}
-.rangerow input[type=range]{flex:1;accent-color:var(--gold);height:18px}
-.rangeval{font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);min-width:56px;text-align:right}
-.statrow{display:grid;grid-template-columns:34px 1fr 30px;align-items:center;gap:8px;margin-bottom:4px}
-.statrow span:first-child{font-size:11px;font-weight:700;color:var(--muted)}
-.statrow input[type=range]{accent-color:var(--accent);width:100%;height:16px}
-.statrow .v{font-size:11px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
-.pslist{max-height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin-top:8px}
-.pslist::-webkit-scrollbar{width:6px}
-.pslist::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-.psitem{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:12.5px}
-.psitem:hover{background:var(--panel-2)}
-.psitem input{accent-color:var(--gold);margin:0}
-.psitem img{width:16px;height:16px;object-fit:contain;opacity:.85}
+.p-row:hover{background:var(--hover)}
+.p-row .rk{width:16px;font-family:var(--cond);font-size:17px;font-weight:800;color:var(--rank);flex:none}
+.p-row .mid{flex:1;min-width:0}
+.p-row .nm{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-row .mt{display:block;font-size:12px;color:var(--ink5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-row .rt{text-align:right;flex:none}
+.p-row .rt b{font-family:var(--cond);font-size:17px;font-weight:800}
+.p-row .rt span{display:block;font-size:12px;font-weight:800}
+.p-row .pos{font-family:var(--cond);font-size:17px;font-weight:800;color:var(--ink2);flex:none}
+.up{color:var(--good)} .down{color:var(--bad)}
 
-/* ---------- Active filters ---------- */
-.active{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;min-height:0}
-.active:empty{display:none}
-.tag{
-  display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
-  background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 8px;
+/* Ratingbrik i lister og tabel */
+.rat{
+  flex:none;display:grid;place-items:center;border-radius:8px;
+  font-family:var(--cond);font-weight:800;
 }
-.tag button{background:0;border:0;cursor:pointer;color:var(--muted);padding:0 0 0 2px;font-size:14px;line-height:1}
-.tag button:hover{color:var(--danger)}
+.rat.g{background:linear-gradient(160deg,#F6E39A,#C9A233);color:#2E2103}
+.rat.s{background:linear-gradient(160deg,#EDF0F4,#9AA1AC);color:#23262D}
+.rat.b{background:linear-gradient(160deg,#E7B183,#9A6034);color:#2B1A0B}
+.rat.sm{width:32px;height:32px;font-size:16px}
+.rat.md{width:36px;height:36px;border-radius:9px;font-size:17px}
 
-/* ---------- Card grid ---------- */
-.grid{
-  display:grid;gap:14px;
-  grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));
-}
-/* Kortet er EA's egen guld-/sølv-/bronzeskabelon. Billedet er beskåret til det
-   synlige kort (406x564), og alt placeres i procent af det, så elementerne
-   sidder rigtigt uanset kortstørrelse. Delelinjen i grafikken ligger 63,3 %
-   nede — navnet står lige under den.
-   container-type gør cqw tilgængelig, så skrift skalerer med kortet. */
-.card{
-  position:relative;aspect-ratio:406/564;border:0;padding:0;cursor:pointer;
-  text-align:left;background:0;color:#2b2205;
+/* ---------- Kortet ---------- */
+.kort{
+  display:flex;flex-direction:column;text-align:center;
+  position:relative;aspect-ratio:504/700;
   container-type:inline-size;
-  transition:transform .14s ease;
-  contain:content;
-}
-.card::before{
-  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  padding:24% 15% 17%;
   background:var(--tpl) center/100% 100% no-repeat;
-  filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));
+  color:#2E2103;
+  transition:transform .14s ease;
+  cursor:pointer;
 }
-.card:hover,.card:focus-visible{transform:translateY(-5px);outline:none}
-.card:focus-visible::before{
-  filter:drop-shadow(0 0 0 2px var(--accent)) drop-shadow(0 3px 8px rgba(0,0,0,.5));
+.kort:hover{transform:translateY(-5px)}
+.kort.t-g{--tpl:url("assets/kort-guld.webp")}
+.kort.t-s{--tpl:url("assets/kort-soelv.webp");color:#23262D}
+.kort.t-b{--tpl:url("assets/kort-bronze.webp");color:#2B1A0B}
+.k-top{display:flex;justify-content:space-between;gap:4%}
+.k-l{padding-left:4%;text-align:center}
+.k-ovr{display:block;font-family:var(--cond);font-weight:800;font-size:16cqw;line-height:.9;letter-spacing:-.5px}
+.k-pos{display:block;font-family:var(--cond);font-weight:800;font-size:6.5cqw;margin-top:1%}
+.k-alt{display:flex;flex-direction:column;gap:4%;padding-top:6%}
+.k-alt i{
+  font-style:normal;font-family:var(--cond);font-weight:800;font-size:6cqw;
+  background:rgba(255,255,255,.4);border-radius:1.5cqw;padding:2% 9%;
 }
-.tier-gold{--tpl:url("assets/card-gold.webp")}
-.tier-silver{--tpl:url("assets/card-silver.webp");color:#23262d}
-.tier-bronze{--tpl:url("assets/card-bronze.webp");color:#2b1a0b}
-
-.c-head{position:absolute;left:10.5%;top:11.5%;z-index:2;text-align:center;line-height:1}
-.c-ovr{display:block;font-size:15.5cqw;font-weight:800;letter-spacing:-.03em}
-.c-pos{display:block;margin-top:1.5cqw;font-size:6.2cqw;font-weight:700;
-  letter-spacing:.04em;opacity:.85}
-
-.c-portrait{
-  position:absolute;right:1%;top:5%;width:67%;height:57%;z-index:1;
-  object-fit:contain;object-position:bottom right;
+.k-shot{flex:1;display:grid;place-items:center;position:relative;min-height:0}
+.k-ini{
+  width:26cqw;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--cond);font-weight:800;font-size:10cqw;
+  background:rgba(255,255,255,.3);border:.6cqw solid rgba(46,33,3,.28);
 }
-/* EA har kun renderet portrætter for en del af spillerne — resten falder
-   tilbage til en silhuet, så kortet ser bevidst ud frem for i stykker. */
-.c-portrait.ph{opacity:.2;object-position:bottom center;right:17%;width:52%}
-
-.c-name{
-  position:absolute;left:7%;right:7%;top:64.8%;z-index:2;text-align:center;
-  font-size:7.6cqw;font-weight:700;line-height:1.08;text-transform:uppercase;
+.k-face{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom}
+.k-shot.has-face .k-ini{visibility:hidden}
+.k-name{
+  font-family:var(--cond);font-weight:800;font-size:8.5cqw;line-height:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-
-/* To rækker à tre med etiketten over værdien, som på kortet i spillet.
-   Højderne er afstemt, så anden række slutter over badges: to rækker fylder
-   ca. 19 % af kortets højde, og fra 71 % ender de ved ca. 90 %. */
-.c-stats{
-  position:absolute;left:8.5%;right:8.5%;top:71%;z-index:2;
-  display:grid;grid-template-columns:repeat(3,1fr);row-gap:.6cqw;
+.k-stats{
+  display:grid;grid-template-columns:repeat(6,1fr);column-gap:1%;
+  border-top:.4cqw solid rgba(46,33,3,.3);margin-top:4%;padding-top:3%;
 }
-.c-stats div{display:flex;flex-direction:column;align-items:center;line-height:1.02}
-.c-stats i{font-style:normal;font-size:5cqw;font-weight:700;opacity:.75;letter-spacing:.02em}
-.c-stats b{font-size:7.8cqw;font-weight:800;font-variant-numeric:tabular-nums}
+.kort.t-s .k-stats{border-top-color:rgba(35,38,45,.3)}
+.kort.t-b .k-stats{border-top-color:rgba(43,26,11,.32)}
+.k-k{font-family:var(--cond);font-weight:800;font-size:5cqw}
+.k-v{font-family:var(--cond);font-weight:700;font-size:8cqw;line-height:1.05}
+.k-foot{display:flex;justify-content:center;gap:7%;opacity:.85;margin-top:2%}
+.k-foot i{font-style:normal;font-family:var(--cond);font-weight:800;font-size:5cqw}
 
-/* Nation og klub nederst, som i spillet. Skjoldet går længst ned på midten
-   (99,6 % mod 93 % ude ved kanterne), så centrerede badges har plads her. */
-.c-badges{
-  position:absolute;left:0;right:0;bottom:4%;z-index:2;
-  display:flex;justify-content:center;align-items:center;gap:7%;
+/* ---------- Spillere ---------- */
+.crumb{font-size:13px;font-weight:600;color:var(--ink5);padding-top:26px}
+.crumb a:hover{color:var(--acc)}
+.h1{font-family:var(--cond);font-size:38px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;margin-top:8px}
+.subline{color:var(--ink5);font-size:14px;margin-top:4px}
+.fbar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:18px}
+.frow{display:flex;gap:10px;flex-wrap:wrap}
+.fld{display:flex;align-items:center;gap:8px;background:var(--input);border:1px solid var(--line-in);border-radius:10px;padding:0 12px}
+.fld input{flex:1;min-width:0;background:0;border:0;outline:none;padding:10px 0}
+.fld input::placeholder{color:var(--ink6)}
+.f-name{flex:1 1 260px;min-width:0}
+select.sel{background:var(--input);border:1px solid var(--line-in);border-radius:10px;padding:10px 12px;outline:none;cursor:pointer}
+.btn-reset{background:0;border:1px solid var(--line-strong);border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;color:var(--ink2);cursor:pointer}
+.btn-reset:hover{border-color:var(--acc);color:var(--acc)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.fchip{
+  background:var(--input);color:var(--ink2);border:1px solid var(--line-in);
+  border-radius:10px;padding:9px 15px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;
 }
-.c-badges img{height:6.5cqw;width:auto;max-width:13%;object-fit:contain;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
-
-.hint{margin:8px 0 0;font-size:11.5px;color:var(--muted-2);line-height:1.45}
-
-/* Ratingændring i forhold til forrige årgang */
-.c-delta{
-  position:absolute;top:8%;right:7%;z-index:3;
-  font-size:11px;font-weight:800;border-radius:6px;padding:2px 5px;
-  font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+.fchip:hover{border-color:var(--acc)}
+.fchip.has{background:var(--acc-t);color:var(--acc-l);border-color:var(--acc-tb)}
+.fchip.open{background:var(--acc-s);color:#fff;border-color:var(--acc-b)}
+.fpanel{background:var(--fpanel);border:1px solid var(--line-in);border-radius:12px;padding:16px;margin-top:12px}
+.fp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.fp-head h4{font-family:var(--cond);font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+.fp-close{background:0;border:0;font-size:13px;font-weight:800;color:var(--acc-l);cursor:pointer}
+.fp-close:hover{color:#fff}
+.lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--ink5);margin-bottom:8px}
+.cols{display:grid;gap:2px}
+.cols.wide{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.cols.narrow{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.scroll{max-height:260px;overflow-y:auto;margin-top:10px}
+.cbrow{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  background:0;border:0;padding:6px 8px;border-radius:8px;cursor:pointer;
+  font-size:14px;color:var(--ink2);
 }
-.c-delta.up{background:#1d7a41;color:#eafff992}
-.c-delta.up{color:#ffffff}
-.c-delta.down{background:#96242e;color:#fff}
-.c-delta.new{background:#1f2937;color:var(--gold);border:1px solid var(--gold-dim)}
-
-.delta{font-weight:800;font-variant-numeric:tabular-nums}
-.delta.up{color:#4dd07a}
-.delta.down{color:#ff7a7a}
-
-/* Sammenligningsbakke */
-.tray{
-  position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:50;
-  display:flex;align-items:center;gap:10px;padding:9px 12px;
-  background:var(--panel);border:1px solid var(--line);border-radius:12px;
-  box-shadow:0 10px 34px rgba(0,0,0,.6);max-width:calc(100% - 24px);
+.cbrow:hover{background:var(--hover-c)}
+.cb{
+  width:18px;height:18px;flex:none;border-radius:5px;border:1px solid var(--line-strong);
+  display:grid;place-items:center;font-size:12px;color:transparent;
 }
-.tray[hidden]{display:none!important}
-.tray-items{display:flex;gap:7px;overflow-x:auto}
-.tray-chip{
-  display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:600;
-  background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:5px 8px;
+.cbrow.on .cb{background:var(--acc-s);border-color:var(--acc-b);color:#fff}
+.cbrow .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.mode{background:var(--input);border:1px solid var(--line-in);border-radius:999px;padding:7px 16px;font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer}
+.mode.on{background:var(--acc-s);border-color:var(--acc-s);color:#fff}
+.posgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+.short{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px solid var(--rule-p)}
+.mini{background:var(--input);border:1px solid var(--line-in);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer}
+.mini:hover{border-color:var(--acc);color:var(--acc)}
+.mini.on{background:var(--acc-s);border-color:var(--acc-s);color:#fff}
+.range{display:flex;gap:10px;flex-wrap:wrap}
+.range .fld{flex:1 1 130px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.statbox{background:var(--input);border:1px solid var(--line-in);border-radius:10px;padding:11px 12px}
+.statbox .h{font-size:12px;font-weight:800;color:var(--acc-l);margin-bottom:8px}
+.statbox .r{display:flex;gap:8px}
+.statbox input{
+  width:100%;min-width:0;background:var(--fpanel);border:1px solid var(--line-in);
+  border-radius:8px;padding:7px 9px;outline:none;font-size:13px;
 }
-.tray-chip b{color:var(--gold);font-variant-numeric:tabular-nums}
-.tray-chip button{background:0;border:0;color:var(--muted);cursor:pointer;padding:0 0 0 2px;font-size:14px;line-height:1}
-.tray-chip button:hover{color:var(--danger)}
-.btn-primary{background:var(--gold);border-color:var(--gold);color:#14161d;font-weight:700}
-.btn-primary:hover{filter:brightness(1.08)}
-
-/* Sammenligningstabel */
-.cmp{width:100%;border-collapse:collapse;font-size:13px}
-.cmp th,.cmp td{padding:6px 9px;border-bottom:1px solid var(--line-soft);text-align:right;font-variant-numeric:tabular-nums}
-.cmp th:first-child,.cmp td:first-child{text-align:left;color:var(--muted);font-weight:500}
-.cmp thead th{text-align:center;font-size:12px;color:var(--txt);border-bottom:1px solid var(--line)}
-.cmp thead img{width:54px;display:block;margin:0 auto 4px;border-radius:5px}
-.cmp td.best{color:var(--gold);font-weight:800}
-.cmp tr.grp td{padding-top:14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:0}
-
-/* Lignende spillere */
-.simlist{display:flex;flex-direction:column;gap:5px}
-.simrow{
-  display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;
-  background:var(--panel);border:1px solid var(--line);cursor:pointer;text-align:left;width:100%;
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tagp{
+  background:var(--acc-t);border:1px solid var(--acc-tb);color:var(--acc-l);
+  border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;cursor:pointer;
 }
-.simrow:hover{border-color:var(--muted-2)}
-.simrow img{width:26px;height:26px;object-fit:contain;border-radius:4px;flex:none}
-.simrow .nm{flex:1;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.simrow .ov{font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
-.simrow .ps{font-size:11px;color:var(--muted);min-width:30px;text-align:right}
+.tagp:hover{border-color:var(--acc);color:#fff}
+.tagp i{font-style:normal;opacity:.7;margin-left:6px}
 
-/* ---------- Holdbygger ---------- */
-.viewtabs{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px}
-.viewtabs button{background:transparent;border:0;border-radius:6px;padding:7px 13px;font-size:13px;
-  font-weight:600;cursor:pointer;color:var(--muted);white-space:nowrap}
-.viewtabs button[aria-pressed="true"]{background:var(--panel);color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.tblwrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow-x:auto;margin-top:18px}
+.tbl{min-width:820px}
+.tr{
+  display:grid;grid-template-columns:52px minmax(180px,2fr) 92px repeat(6,48px) 96px;
+  gap:10px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--rule);
+  width:100%;text-align:left;background:0;border-left:0;border-right:0;border-top:0;cursor:pointer;
+}
+.tr:hover{background:var(--hover)}
+.th{
+  display:grid;grid-template-columns:52px minmax(180px,2fr) 92px repeat(6,48px) 96px;
+  gap:10px;padding:12px 16px;background:var(--thead);
+  font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--ink5);
+}
+.th .c,.tr .c{text-align:center}
+.th .e,.tr .e{text-align:right}
+.tr .cell{min-width:0}
+.tr .nm{display:block;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .mt{display:block;font-size:12px;color:var(--ink5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .ps{font-size:12px;font-weight:800;color:var(--ink2)}
+.sbox{
+  height:38px;display:grid;place-items:center;border-radius:6px;
+  font-family:var(--cond);font-size:16px;font-weight:800;border:1px solid;
+}
+.chg{font-family:var(--cond);font-size:16px;font-weight:800;color:var(--ink2)}
+.chg small{display:block;font-family:'Manrope',sans-serif;font-size:11px;font-weight:700;color:var(--ink5)}
+.empty{text-align:center;padding:44px 20px;color:var(--ink4)}
 
-/* Holdbyggeren er et tredje barn i .wrap's to-kolonne-grid. Uden det her
-   havner den i den 284px brede filterkolonne, og banen kollapser. */
-.wrap.squad-mode{grid-template-columns:minmax(0,1fr)}
+/* ---------- Spillerside ---------- */
+.det{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;align-items:start;margin-top:18px}
+.det-l{max-width:340px;width:100%}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
+.mbox .lbl{margin-bottom:10px}
+.mbox .big{font-family:var(--cond);font-size:34px;font-weight:800;color:var(--acc);line-height:1}
+.mbox .top{display:flex;align-items:baseline;gap:10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-top:14px}
+.tile{background:var(--input);border:1px solid var(--line-in);border-radius:10px;padding:10px 12px}
+.tile .k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--ink5)}
+.tile .v{font-family:var(--cond);font-size:20px;font-weight:800;margin-top:3px}
+.det-r h1{font-family:var(--cond);font-size:clamp(30px,5vw,46px);font-weight:800;line-height:1}
+.mchips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.mchip{background:var(--input);border:1px solid var(--line-in);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;white-space:nowrap}
+.mchip span{color:var(--ink5);margin-right:5px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.badge{background:var(--navy);border:1px solid var(--navy-b);color:var(--acc);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:800}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--rule-t);padding-bottom:14px;margin-top:22px}
+.grps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px}
+.grp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.grp .gh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--rule-t)}
+.grp .gh h4{font-family:var(--cond);font-size:19px;font-weight:800}
+.grp .gh b{font-family:var(--cond);font-size:22px;font-weight:800}
+.srow{margin-top:11px}
+.srow .l{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink3)}
+.srow .l b{font-weight:800;color:var(--ink)}
+.bar{height:5px;border-radius:99px;background:var(--track);margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px}
+.sums{display:grid;gap:12px;margin-top:16px}
+.sum{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.sum .l{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--ink5)}
+.sum .l b{font-family:var(--cond);font-size:18px;letter-spacing:0;text-transform:none;color:var(--ink)}
+.chem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.chem{background:var(--input);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--ink3)}
+.chem.rec{background:var(--navy);border-color:var(--navy-b);color:var(--acc)}
+.chem b{display:block;font-family:var(--cond);font-size:18px;font-weight:800}
+.chem span{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;opacity:.75}
+.prose{font-size:14px;line-height:1.6;color:var(--ink2);margin:12px 0 0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--rule-t);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:16px}
+.facts div{background:var(--panel);padding:12px 14px}
+.facts .k{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--ink5)}
+.facts .v{font-size:14px;font-weight:700;margin-top:3px}
+.simgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:16px}
+.h2{font-family:var(--cond);font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-top:26px}
 
-.squadwrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+/* ---------- Squad builder ---------- */
+.sqwrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start;margin-top:18px}
 .pitch{
-  position:relative;aspect-ratio:3/4;margin:0 auto;
-  width:100%;max-width:620px;min-height:520px;
-  border-radius:16px;border:1px solid var(--line);
+  position:relative;aspect-ratio:3/4;border-radius:14px;overflow:hidden;
+  /* width:100% er nødvendig: banen har kun absolut placerede børn, så uden en
+     eksplicit bredde gør "margin:0 auto" den til et krympende gitterelement
+     på 2 px. */
+  width:100%;max-width:620px;margin:0 auto;border:1px solid var(--line);
   background:
-    linear-gradient(180deg,#0f2418,#0c1c13),
-    repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 8%,transparent 8% 16%);
-  background-blend-mode:normal;overflow:hidden;
+    radial-gradient(120% 80% at 50% 0%, rgba(46,123,224,.14), transparent 62%),
+    repeating-linear-gradient(#0c1a12 0 46px, #0e1e15 46px 92px);
 }
-/* Banemarkeringerne er ren pynt og må aldrig opfange klik — uden
-   pointer-events:none dækker straffesparksfeltet målmandspladsen. */
-.pitch::before,.pitch::after{
-  content:"";position:absolute;left:50%;transform:translateX(-50%);
-  border:1px solid rgba(255,255,255,.10);border-radius:2px;pointer-events:none;
+.pitch::before{
+  content:"";position:absolute;inset:14px;border:2px solid rgba(255,255,255,.11);border-radius:6px;pointer-events:none;
 }
-.pitch::before{top:0;width:46%;height:15%;border-top:0}
-.pitch::after{bottom:0;width:46%;height:15%;border-bottom:0}
-.pitch-mid{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,.10);pointer-events:none}
-.pitch-circle{position:absolute;top:50%;left:50%;width:22%;aspect-ratio:1;transform:translate(-50%,-50%);
-  border:1px solid rgba(255,255,255,.10);border-radius:50%;pointer-events:none}
-
+.pitch::after{
+  content:"";position:absolute;left:50%;top:14px;bottom:14px;width:0;
+  border-left:2px dashed rgba(255,255,255,.09);pointer-events:none;
+}
 .slot{
-  position:absolute;z-index:2;transform:translate(-50%,-50%);
-  width:17%;min-width:78px;max-width:104px;
-  background:0;border:0;padding:0;cursor:pointer;text-align:center;color:var(--txt);
+  position:absolute;transform:translate(-50%,-50%);z-index:2;
+  width:15%;min-width:74px;background:0;border:0;padding:0;cursor:pointer;color:inherit;
 }
-.slot-inner{
-  display:block;
-  border-radius:10px;padding:6px 4px 5px;border:1px solid var(--line);
-  background:rgba(16,19,26,.82);backdrop-filter:blur(2px);transition:.13s;
+.slot-in{display:block;background:rgba(6,10,16,.72);border:1px solid var(--line);border-radius:12px;padding:7px 5px;text-align:center}
+.slot:hover .slot-in{border-color:var(--acc)}
+.slot.oop .slot-in{border-color:var(--bad)}
+.slot-pos{display:block;font-family:var(--cond);font-size:13px;font-weight:800;color:var(--ink5)}
+.slot-img{display:block;width:46px;height:46px;margin:2px auto;object-fit:contain}
+.slot-ovr{display:block;font-family:var(--cond);font-size:18px;font-weight:800}
+.slot-name{display:block;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-empty{display:block;font-size:22px;color:var(--ink5);padding:12px 0}
+.pips{display:flex;gap:3px;justify-content:center;margin-top:4px}
+.pips i{width:12px;height:4px;border-radius:2px;background:#2A3038}
+.pips i.on{background:var(--good)}
+.rm{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#1A1E26;border:1px solid var(--line-strong);display:grid;place-items:center;font-size:13px;color:var(--ink3)}
+.rm:hover{background:var(--bad);color:#fff}
+.sqside{display:grid;gap:14px}
+.sqstats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sqstat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.sqstat b{display:block;font-family:var(--cond);font-size:30px;font-weight:800}
+.sqstat span{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--ink5)}
+.sqstat.chem b{color:var(--good)}
+.sqbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.sqbox h4{font-family:var(--cond);font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.linkrow{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0}
+.linkrow b{font-weight:800}
+.sqacts{display:grid;gap:8px}
+.sqacts button{width:100%}
+
+/* ---------- Dialoger ---------- */
+dialog{
+  border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:16px;padding:0;max-width:min(560px,94vw);width:100%;
 }
-.slot:hover .slot-inner,.slot:focus-visible .slot-inner{border-color:var(--gold);transform:translateY(-2px)}
-.slot:focus-visible{outline:none}
-.slot.filled .slot-inner{background:linear-gradient(170deg,rgba(139,111,34,.92),rgba(240,220,148,.92));color:#241d05;border-color:rgba(0,0,0,.25)}
-.slot.filled.oop .slot-inner{background:linear-gradient(170deg,rgba(93,100,112,.92),rgba(217,222,230,.9))}
-.slot-pos{display:block;font-size:10px;font-weight:800;letter-spacing:.05em;opacity:.75}
-.slot-img{width:38px;height:38px;object-fit:contain;display:block;margin:1px auto 0}
-.slot-name{display:block;font-size:10.5px;font-weight:700;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;line-height:1.25}
-.slot-ovr{display:block;font-size:14px;font-weight:900;line-height:1}
-.slot-empty{font-size:19px;opacity:.4;padding:12px 0 11px;display:block}
-.chempips{display:flex;gap:2px;justify-content:center;margin-top:2px}
-.chempips i{width:5px;height:5px;border-radius:1px;background:rgba(0,0,0,.28);transform:rotate(45deg)}
-.chempips i.on{background:#1d7a41}
-.slot.filled .chempips i.on{background:#0f5c2e}
-.slot .rm{position:absolute;top:-6px;right:-4px;width:18px;height:18px;border-radius:50%;
-  background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1;
-  cursor:pointer;display:none}
-.slot.filled:hover .rm{display:block}
-.slot .rm:hover{color:var(--danger);border-color:var(--danger)}
-
-.sq-panel{position:sticky;top:74px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
-.sq-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border-radius:var(--radius) var(--radius) 0 0;overflow:hidden}
-.sq-stat{background:var(--panel);padding:14px 12px;text-align:center}
-.sq-stat b{display:block;font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
-.sq-stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.sq-stat.chem b{color:#4dd07a}
-.sq-body{padding:14px 16px;border-top:1px solid var(--line-soft)}
-.sq-body h3{margin:0 0 9px;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.linkrow{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px solid var(--line-soft)}
-.linkrow:last-child{border-bottom:0}
-.linkrow b{font-variant-numeric:tabular-nums}
-.linkrow .n{color:var(--muted)}
-.sq-actions{display:flex;gap:7px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line-soft)}
-.sq-actions .btn{flex:1;min-width:92px;font-size:12.5px}
-
-#pickDlg{max-width:620px}
-.pick-list{max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-top:10px}
-.pick-row{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;width:100%;
-  background:var(--panel);border:1px solid var(--line);cursor:pointer;text-align:left;color:var(--txt)}
-.pick-row:hover{border-color:var(--gold)}
-.pick-row img{width:28px;height:28px;object-fit:contain;flex:none}
-.pick-row .nm{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pick-row .meta{font-size:11px;color:var(--muted);white-space:nowrap}
-.pick-row .ov{font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
-.pick-row .oop{font-size:10px;color:#ffab6b;border:1px solid #6b4423;border-radius:4px;padding:1px 4px}
-
-@media (max-width:900px){
-  .squadwrap{grid-template-columns:minmax(0,1fr)}
-  .sq-panel{position:static}
-  .pitch{max-height:none}
-}
-
-.empty{padding:60px 20px;text-align:center;color:var(--muted)}
-.empty h2{color:var(--txt);margin:0 0 6px}
-.sentinel{height:1px}
-.more{padding:26px;text-align:center;color:var(--muted);font-size:13px}
-
-/* ---------- Loading ---------- */
-.loading{padding:80px 20px;text-align:center;color:var(--muted)}
-.spinner{
-  width:34px;height:34px;margin:0 auto 14px;border-radius:50%;
-  border:3px solid var(--line);border-top-color:var(--gold);
-  animation:spin .8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ---------- Modal ---------- */
-dialog#detail,dialog#cmpDlg{
-  border:1px solid var(--line);border-radius:16px;padding:0;
-  background:var(--bg-2);color:var(--txt);max-width:820px;width:calc(100% - 32px);
-  max-height:88vh;overflow:auto;
-}
-dialog#detail::backdrop,dialog#cmpDlg::backdrop{background:rgba(5,6,9,.72);backdrop-filter:blur(3px)}
-.d-head{display:flex;gap:20px;padding:22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.d-card{width:168px;flex:none}
-/* Kortets indhold er absolut positioneret, så knappen skal have en bredde
-   udefra — i gridet kommer den fra grid-kolonnen. */
-.d-card .card{width:100%;pointer-events:none}
-.d-id h2{margin:0 0 3px;font-size:23px;letter-spacing:-.02em}
-.d-sub{color:var(--muted);font-size:13px;margin-bottom:12px}
-.d-sub img{width:18px;height:13px;object-fit:contain;vertical-align:-2px;margin-right:5px}
-.d-facts{display:flex;flex-wrap:wrap;gap:6px}
-.fact{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:12px}
-.fact b{color:var(--gold)}
-.d-body{padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
-/* Uden PlayStyles-spalten fylder attributterne to kolonner i stedet. */
-.d-body.one-col{grid-template-columns:1fr}
-.d-body.one-col > div{columns:2;column-gap:26px}
-.d-body.one-col .sgroup{break-inside:avoid}
-.d-body h3{margin:0 0 9px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.sgroup{margin-bottom:16px}
-.sline{display:grid;grid-template-columns:1fr 30px;gap:8px;align-items:center;font-size:12.5px;padding:2px 0}
-.sline .bar{grid-column:1/-1;height:4px;border-radius:2px;background:var(--panel-2);overflow:hidden;margin-top:-2px}
-.sline .bar i{display:block;height:100%;border-radius:2px}
-.sline .n{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
-.pstyle{display:flex;gap:10px;padding:8px;border-radius:9px;background:var(--panel);border:1px solid var(--line);margin-bottom:6px}
-.pstyle img{width:24px;height:24px;object-fit:contain;flex:none}
-.pstyle b{display:block;font-size:13px}
-.pstyle span{font-size:11.5px;color:var(--muted);line-height:1.4}
-.pstyle.plus{border-color:var(--gold-dim);background:linear-gradient(180deg,rgba(232,201,106,.09),transparent)}
-.d-close{position:absolute;top:14px;right:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:17px;line-height:1}
+dialog::backdrop{background:rgba(3,5,9,.72)}
+.dl-in{padding:20px}
+.dl-close{position:absolute;top:10px;right:12px;background:0;border:0;font-size:22px;color:var(--ink4);cursor:pointer}
+.dl-close:hover{color:#fff}
+.picklist{max-height:min(52vh,420px);overflow-y:auto;margin-top:10px}
+.pickrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:0;border:0;border-bottom:1px solid var(--rule);padding:8px 6px;cursor:pointer;color:inherit}
+.pickrow:hover{background:var(--hover)}
+.pickrow img{width:34px;height:34px;object-fit:contain;flex:none}
+.pickrow .nm{flex:1;min-width:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pickrow .mt{font-size:12px;color:var(--ink5);white-space:nowrap}
+.pickrow .oop{font-size:11px;color:var(--bad);font-weight:700}
+.pickrow .ov{font-family:var(--cond);font-size:18px;font-weight:800;width:30px;text-align:right}
 
 /* ---------- Footer ---------- */
-footer{max-width:1680px;margin:0 auto;padding:26px 18px 46px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line-soft);margin-top:26px}
-footer p{margin:0 0 7px;max-width:78ch}
-code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+footer{margin-top:52px;border-top:1px solid #1D2027;background:#0D0F13}
+.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:20px 18px;font-size:13px;font-weight:600;color:var(--ink6);max-width:1320px;margin:0 auto}
 
-@media (max-width:1000px){
-  .wrap{grid-template-columns:1fr}
-  .filters{position:fixed;inset:0 auto 0 0;width:290px;max-height:100%;border-radius:0;z-index:60;transform:translateX(-100%);transition:transform .2s;overflow-y:auto}
-  .filters.open{transform:none;box-shadow:0 0 60px rgba(0,0,0,.7)}
-  .sidebar-toggle{display:inline-flex}
-  .d-body{grid-template-columns:1fr}
+@media (max-width:900px){
+  .sqwrap{grid-template-columns:minmax(0,1fr)}
 }
-@media (max-width:520px){
-  :root{--card-w:150px}
-  .topbar-in{padding:10px 12px;gap:9px}
-  .wrap{padding:12px}
+@media (max-width:560px){
+  .hd{gap:10px}
+  .hero{padding:40px 18px 34px}
+  .sec-head h2{font-size:24px}
+  .h1{font-size:30px}
 }
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="topbar-in">
-    <div class="brand">
-      <span class="dot"></span>
-      <span>fut27<small>EA SPORTS FC 27 · 20.689 spillere</small></span>
-    </div>
-
-    <button class="btn sidebar-toggle" id="toggleFilters" aria-expanded="false">Filtre</button>
-
-    <div class="search">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="Søg spiller, klub eller nation…" autocomplete="off" spellcheck="false">
-    </div>
-
-    <div class="count"><b id="shown">0</b> af <b id="total">0</b> kort</div>
-
-    <div class="viewtabs" id="viewTabs">
-      <button data-view="players" aria-pressed="true">Spillere</button>
-      <button data-view="squad" aria-pressed="false">Holdbygger</button>
-    </div>
-
-    <div class="sortwrap">
-      <select id="sort" aria-label="Sortering">
-        <option value="ovr">Rating (højest)</option>
-        <option value="ovr-asc">Rating (lavest)</option>
-        <option value="pac">Fart</option>
-        <option value="sho">Skud</option>
-        <option value="pas">Aflevering</option>
-        <option value="dri">Dribling</option>
-        <option value="def">Forsvar</option>
-        <option value="phy">Fysik</option>
-        <option value="skills">Tricks</option>
-        <option value="weak">Svag fod</option>
-        <option value="young">Yngst</option>
-        <option value="old">Ældst</option>
-        <option value="name">Navn A–Å</option>
-        <option value="change">Størst stigning</option>
-        <option value="change-asc">Størst fald</option>
-      </select>
-    </div>
+<header class="hd">
+  <a class="hd-brand" href="#/" aria-label="FIFA Centralen, til forsiden">
+    <img src="assets/logo.webp" alt="">
+    <span class="mark">FIFA <b>CENTRALEN</b></span>
+  </a>
+  <nav class="nav" id="nav">
+    <a href="#/" data-v="home">Forside</a>
+    <a href="#/spillere" data-v="players">Spillere</a>
+    <a href="#/hold" data-v="squad">Squad Builder</a>
+  </nav>
+  <div class="hd-search">
+    <span class="gl" aria-hidden="true">⌕</span>
+    <input id="hq" type="search" placeholder="Søg spiller…" autocomplete="off" spellcheck="false" aria-label="Søg spiller">
+    <span class="tag27">FC 27</span>
   </div>
+  <button class="hd-about" id="aboutBtn">Om data</button>
 </header>
 
-<div class="wrap">
-  <!-- ============ FILTRE ============ -->
-  <aside class="filters" id="filters">
-    <div class="fgroup">
-      <h3>Rating</h3>
-      <div class="rangerow">
-        <input type="range" id="ovrMin" min="40" max="99" value="40">
-        <span class="rangeval" id="ovrMinV">40+</span>
-      </div>
-      <div class="rangerow">
-        <input type="range" id="ovrMax" min="40" max="99" value="99">
-        <span class="rangeval" id="ovrMaxV">–99</span>
-      </div>
+<!-- ================= FORSIDE ================= -->
+<main id="view-home" hidden>
+  <section class="hero">
+    <div class="hero-in">
+      <img class="logo" src="assets/logo.webp" alt="">
+      <h1>FIFA <b>CENTRALEN</b></h1>
+      <div class="tagline">Din central for FC 27</div>
+      <p class="sub">Ratings, egenskaber og meta på alle EA FC 27-kort. Hentet direkte fra EA.</p>
+      <form class="hero-search" id="heroForm">
+        <label class="fld">
+          <span class="gl" aria-hidden="true">⌕</span>
+          <input id="heroQ" type="search" placeholder="Søg efter EA FC 27-spiller…" autocomplete="off" aria-label="Søg efter spiller">
+        </label>
+        <button class="btn-p" type="submit">Søg</button>
+      </form>
+      <div class="pop">Højest ratede: <span id="popNames"></span></div>
     </div>
+  </section>
 
-    <div class="fgroup">
-      <h3>Position</h3>
-      <div class="chips" id="posChips"></div>
-      <label class="psitem" style="margin-top:9px;padding-left:0">
-        <input type="checkbox" id="altPos"> Tæl også alternative positioner
+  <div class="wrap">
+    <section class="sec">
+      <div class="sec-head">
+        <div>
+          <h2>Kort i fokus</h2>
+          <div class="sub">De højest ratede EA FC 27-kort — vælg en vinkel</div>
+        </div>
+        <div class="pills" id="homeTabs"></div>
+      </div>
+      <div class="cards" id="homeCards"></div>
+      <div class="center"><a class="ghost" href="#/spillere">Se hele databasen →</a></div>
+    </section>
+
+    <section class="duo">
+      <div class="panel">
+        <div class="p-head"><h3>Største ratingspring</h3><span class="r">FC 26 → FC 27</span></div>
+        <div id="pulsList"></div>
+      </div>
+      <div class="panel">
+        <div class="p-head"><h3>Højeste rating</h3><a class="r" href="#/spillere">Se alle ›</a></div>
+        <div id="topList"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ================= SPILLERE ================= -->
+<main id="view-players" class="wrap" hidden>
+  <div class="crumb"><a href="#/">Forside</a> › Spillere</div>
+  <h1 class="h1">EA FC 27 spillere</h1>
+  <div class="subline" id="subline"></div>
+
+  <div class="fbar">
+    <div class="frow">
+      <label class="fld f-name">
+        <span class="gl" aria-hidden="true">⌕</span>
+        <input id="fq" type="search" placeholder="Filtrér på spillernavn…" autocomplete="off" aria-label="Filtrér på navn">
       </label>
+      <select class="sel" id="sortSel" aria-label="Sortering"></select>
+      <button class="btn-reset" id="resetAll">Nulstil alt</button>
     </div>
+    <div class="chips" id="fchips"></div>
+    <div id="fpanel"></div>
+    <div class="tags" id="ftags"></div>
+  </div>
 
-    <div class="fgroup">
-      <h3>Kategori</h3>
-      <div class="seg" id="typeSeg">
-        <button data-v="" aria-pressed="true">Alle</button>
-        <button data-v="0" aria-pressed="false">MV</button>
-        <button data-v="1" aria-pressed="false">Forsvar</button>
-        <button data-v="2" aria-pressed="false">Midt</button>
-        <button data-v="3" aria-pressed="false">Angreb</button>
+  <div class="tblwrap">
+    <div class="tbl">
+      <div class="th">
+        <span>Rat</span><span>Navn</span><span>Position</span>
+        <span class="c">PAC</span><span class="c">SHO</span><span class="c">PAS</span>
+        <span class="c">DRI</span><span class="c">DEF</span><span class="c">PHY</span>
+        <span class="e">FC 26</span>
       </div>
+      <div id="rows"></div>
     </div>
+  </div>
+  <div class="center"><button class="ghost" id="more" hidden>Vis flere spillere</button></div>
+</main>
 
-    <div class="fgroup">
-      <h3>Køn</h3>
-      <div class="seg" id="genderSeg">
-        <button data-v="" aria-pressed="true">Alle</button>
-        <button data-v="0" aria-pressed="false">Herrer</button>
-        <button data-v="1" aria-pressed="false">Kvinder</button>
-      </div>
-    </div>
+<!-- ================= SPILLERSIDE ================= -->
+<main id="view-player" class="wrap" hidden>
+  <div class="crumb"><a href="#/spillere">‹ Tilbage til spillere</a></div>
+  <div id="detail"></div>
+</main>
 
-    <div class="fgroup">
-      <h3>Hold</h3>
-      <div class="field">
-        <label for="league">Liga</label>
-        <select id="league"><option value="">Alle ligaer</option></select>
+<!-- ================= SQUAD BUILDER ================= -->
+<main id="view-squad" class="wrap" hidden>
+  <div class="crumb"><a href="#/">Forside</a> › Squad Builder</div>
+  <h1 class="h1">Squad Builder</h1>
+  <div class="subline">Sæt et hold, og se chemistry og holdrating regnet efter FC 26/27-reglerne.</div>
+  <div class="sqwrap">
+    <div class="pitch" id="pitch"></div>
+    <div class="sqside">
+      <div class="sqstats">
+        <div class="sqstat"><b id="sqRating">—</b><span>Holdrating</span></div>
+        <div class="sqstat chem"><b id="sqChem">0</b><span>Chemistry</span></div>
       </div>
-      <div class="field">
-        <label for="club">Klub</label>
-        <input type="text" id="club" list="clubList" placeholder="Alle klubber" autocomplete="off">
-        <datalist id="clubList"></datalist>
+      <div class="sqbox">
+        <h4>Formation</h4>
+        <select class="sel" id="formation" style="width:100%"></select>
       </div>
-      <div class="field">
-        <label for="nation">Nation</label>
-        <input type="text" id="nation" list="nationList" placeholder="Alle nationer" autocomplete="off">
-        <datalist id="nationList"></datalist>
+      <div class="sqbox">
+        <h4>Forbindelser</h4>
+        <div id="links"></div>
       </div>
-    </div>
-
-    <div class="fgroup">
-      <h3>Profil</h3>
-      <div class="field">
-        <label>Foretrukken fod</label>
-        <div class="seg" id="footSeg">
-          <button data-v="" aria-pressed="true">Begge</button>
-          <button data-v="1" aria-pressed="false">Højre</button>
-          <button data-v="2" aria-pressed="false">Venstre</button>
-        </div>
+      <div class="sqbox">
+        <h4>Holdets snit</h4>
+        <div id="sqAvg"></div>
       </div>
-      <div class="field">
-        <label for="skills">Tricks (mindst) — <span id="skillsV">1</span>★</label>
-        <input type="range" id="skills" min="1" max="5" value="1" style="width:100%;accent-color:var(--gold)">
-      </div>
-      <div class="field">
-        <label for="weak">Svag fod (mindst) — <span id="weakV">1</span>★</label>
-        <input type="range" id="weak" min="1" max="5" value="1" style="width:100%;accent-color:var(--gold)">
-      </div>
-      <div class="field">
-        <label for="ageMax">Alder højst — <span id="ageMaxV">Alle</span></label>
-        <input type="range" id="ageMax" min="16" max="45" value="45" style="width:100%;accent-color:var(--gold)">
-      </div>
-      <div class="field" id="heightField">
-        <label for="hMin">Højde mindst — <span id="hMinV">Alle</span></label>
-        <input type="range" id="hMin" min="150" max="205" value="150" style="width:100%;accent-color:var(--gold)">
+      <div class="sqacts">
+        <button class="btn-p" id="sqAuto">Fyld bedste XI</button>
+        <button class="ghost" id="sqOpt">Optimér chemistry</button>
+        <button class="ghost" id="sqClear">Ryd hold</button>
       </div>
     </div>
-
-    <div class="fgroup">
-      <h3>Minimum-attributter</h3>
-      <div id="statFilters"></div>
-    </div>
-
-    <div class="fgroup">
-      <h3>Accelerationstype</h3>
-      <div class="chips" id="accelChips"></div>
-      <p class="hint" id="accelHint"></p>
-    </div>
-
-    <div class="fgroup" id="changeGroup">
-      <h3>Ændring siden <span id="prevEd">FC 26</span></h3>
-      <div class="seg" id="changeSeg">
-        <button data-v="" aria-pressed="true">Alle</button>
-        <button data-v="up" aria-pressed="false">Steget</button>
-        <button data-v="down" aria-pressed="false">Faldet</button>
-        <button data-v="new" aria-pressed="false">Ny</button>
-      </div>
-      <p class="hint" id="changeHint"></p>
-    </div>
-
-    <div class="fgroup" id="psGroup">
-      <h3>PlayStyles</h3>
-      <input type="text" id="psSearch" placeholder="Søg PlayStyle…" autocomplete="off"
-             style="width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;outline:none">
-      <div class="pslist" id="psList"></div>
-      <label class="psitem" style="padding-left:0;margin-top:6px">
-        <input type="checkbox" id="psPlusOnly"> Kun som PlayStyle+
-      </label>
-    </div>
-
-    <div class="fgroup">
-      <button class="btn btn-ghost" id="reset" style="width:100%">Nulstil alle filtre</button>
-    </div>
-  </aside>
-
-  <!-- ============ RESULTATER ============ -->
-  <main>
-    <div class="active" id="activeTags"></div>
-    <div id="loading" class="loading"><div class="spinner"></div>Indlæser 17.873 spillerkort…</div>
-    <div class="grid" id="grid" hidden></div>
-    <div class="sentinel" id="sentinel"></div>
-    <div class="more" id="more" hidden></div>
-  </main>
-
-  <!-- ============ HOLDBYGGER ============ -->
-  <main id="squadView" hidden>
-    <div class="squadwrap">
-      <div>
-        <div class="pitch" id="pitch">
-          <div class="pitch-mid"></div><div class="pitch-circle"></div>
-        </div>
-      </div>
-
-      <aside class="sq-panel">
-        <div class="sq-stats">
-          <div class="sq-stat"><b id="sqRating">—</b><span>Holdrating</span></div>
-          <div class="sq-stat chem"><b id="sqChem">0</b><span>Chemistry</span></div>
-        </div>
-
-        <div class="sq-body">
-          <h3>Formation</h3>
-          <select id="formation" style="width:100%"></select>
-        </div>
-
-        <div class="sq-body">
-          <h3>Forbindelser</h3>
-          <div id="links"><p class="hint" style="margin:0">Sæt spillere på banen for at se klub-, liga- og nationsforbindelser.</p></div>
-        </div>
-
-        <div class="sq-body">
-          <h3>Gennemsnit</h3>
-          <div id="sqAvg"><p class="hint" style="margin:0">Tomt hold.</p></div>
-        </div>
-
-        <div class="sq-actions">
-          <button class="btn btn-primary" id="sqAuto">Fyld bedste XI</button>
-          <button class="btn" id="sqOptimise">Optimér chemistry</button>
-          <button class="btn btn-ghost" id="sqClear">Ryd hold</button>
-          <button class="btn btn-ghost" id="sqShare">Kopiér link</button>
-        </div>
-
-        <p class="hint" style="padding:0 16px 14px;margin:0">
-          Chemistry efter FC 26/27-reglerne: klub 2/4/7, liga 3/5/8 og nation 2/5/8 spillere
-          giver 1/2/3 point, højst 3 pr. spiller og 33 i alt. Spillere ude af position får 0 og
-          tæller ikke med i holdkammeraternes forbindelser.
-        </p>
-      </aside>
-    </div>
-  </main>
-</div>
-
-<dialog id="detail"></dialog>
-<dialog id="cmpDlg"></dialog>
-<dialog id="pickDlg"></dialog>
-
-<div class="tray" id="tray" hidden>
-  <span style="font-size:12px;color:var(--muted);white-space:nowrap">Sammenlign</span>
-  <div class="tray-items" id="trayItems"></div>
-  <button class="btn btn-primary" id="cmpOpen">Vis</button>
-  <button class="btn btn-ghost" id="cmpClear">Ryd</button>
-</div>
+  </div>
+</main>
 
 <footer>
-  <p><strong>Hvad er det her?</strong> En demo bygget på EA's offentlige ratings-endpoint
-    <code>drop-api.ea.com/rating/ea-sports-fc</code> — ingen API-nøgle, ingen login, ingen backend.
-    Data er ratings-droppet til <strong>EA SPORTS FC 27</strong>; EA efterjusterer ratings i
-    september efter transfervinduet, så kør en refresh hvis tallene skal være helt friske.</p>
-  <p><strong>Hvorfor FC 27 og ikke FC 26?</strong> Det samme endpoint svarer med to forskellige
-    databaser afhængigt af <code>drop-referrer</code>-headeren: uden den får man FC 26
-    (17.873 spillere), med den FC 27 (20.689). Der er ingen årgangsparameter — headeren er
-    hele forskellen.</p>
-  <p><strong>Manglende PlayStyles.</strong> EA har ikke udgivet PlayStyles sammen med
-    FC 27-ratings endnu — <code>playerAbilities</code> er tomt for alle spillere, både hos EA
-    og hos tredjeparter. Filteret er derfor skjult og dukker op af sig selv, når et
-    fremtidigt datasæt indeholder dem. Spillere uden portræt hos EA vises med en silhuet.</p>
-  <p><strong>Hvorfor er data bundlet i stedet for hentet live?</strong> EA sender kun
-    <code>access-control-allow-origin</code> tilbage til <code>https://www.ea.com</code>, så browseren blokerer
-    direkte kald fra andre domæner. Datasættet er derfor hentet server-side én gang og lagt i
-    <code>data/players.js</code>. Kør <code>tools/refresh.sh</code> for at opdatere det.</p>
-  <p><strong>Bemærk:</strong> det er basisspillerdatabasen — ikke live Ultimate Team-priser. Markedspriser
-    ligger bag Cloudflare hos FUTBIN/FUT.GG, og EA's officielle FC Community API er kun åben for tre
-    godkendte partnersites. Spillerbilleder og logoer hotlinkes fra EA's eget CDN og tilhører EA Sports.
-    Uofficiel demo, ikke tilknyttet EA.</p>
-  <p id="genstamp"></p>
+  <div class="foot">
+    <span>FIFA CENTRALEN · din central for FC 27. Uafhængig database — ikke tilknyttet EA Sports.</span>
+    <span id="footData"></span>
+  </div>
 </footer>
+
+<dialog id="aboutDlg"></dialog>
+<dialog id="pickDlg"></dialog>
 
 <script src="data/players.js"></script>
 <script>
 (function(){
 "use strict";
 
-/* Silhuet til spillere uden portræt hos EA. Global, fordi kortenes
-   onerror-attribut refererer den. */
-window.FUT_SILHOUETTE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23000' d='M50 14c9.4 0 17 7.6 17 17s-7.6 17-17 17-17-7.6-17-17 7.6-17 17-17zm0 42c18.8 0 34 9.6 34 21.4V92H16V77.4C16 65.6 31.2 56 50 56z'/%3E%3C/svg%3E";
-
 var D = window.FUT_DATA;
 if(!D){
-  document.getElementById('loading').innerHTML =
-    '<h2 style="color:var(--danger)">Kunne ikke indlæse data</h2>' +
-    '<p>Filen <code>data/players.js</code> mangler. Kør <code>tools/refresh.sh</code>.</p>';
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div class="wrap" style="padding:40px 18px"><h1 class="h1">Kunne ikke indlæse data</h1>'+
+    '<p class="subline">Filen <code>data/players.js</code> mangler. Kør <code>tools/refresh.sh</code>.</p></div>');
   return;
 }
 
@@ -692,57 +586,92 @@ if(!D){
 var ID=0,NAME=1,OVR=2,RANK=3,POS=4,PTYPE=5,ALT=6,CLUB=7,NAT=8,LEAGUE=9,
     GENDER=10,FOOT=11,SKILLS=12,WEAK=13,HEIGHT=14,WEIGHT=15,BORN=16,
     STATS=17,PS=18,PSP=19,ACCEL=20,PREV=21;
+var KEY=22;   /* cacheplads efter sidste rigtige felt */
 
 var P = D.players, S = D.statKeys;
-var FACE = ['pac','sho','pas','dri','def','phy'];
-var FACE_LABEL = {pac:'PAC',sho:'SHO',pas:'PAS',dri:'DRI',def:'DEF',phy:'PHY'};
-var FACE_LABEL_GK = {pac:'DIV',sho:'HAN',pas:'KIC',dri:'REF',def:'SPE',phy:'POS'};
-var FACE_FULL = {pac:'Fart',sho:'Skud',pas:'Aflevering',dri:'Dribling',def:'Forsvar',phy:'Fysik'};
-var POSITIONS = ['GK','CB','LB','RB','CDM','CM','CAM','LM','RM','LW','RW','ST'];
-var NOW = new Date();
+var SI = {}; S.forEach(function(k,i){ SI[k]=i; });
 
-var STAT_GROUPS = [
-  ['Fart',            ['acceleration','sprintSpeed'], '#4dd07a'],
-  ['Skud',            ['positioning','finishing','shotPower','longShots','volleys','penalties'], '#ff7a59'],
-  ['Aflevering',      ['vision','crossing','freeKickAccuracy','shortPassing','longPassing','curve'], '#4da3ff'],
-  ['Dribling',        ['agility','balance','reactions','ballControl','dribbling','composure'], '#e8c96a'],
-  ['Forsvar',         ['interceptions','headingAccuracy','defensiveAwareness','standingTackle','slidingTackle'], '#b07aff'],
-  ['Fysik',           ['jumping','stamina','strength','aggression'], '#ff5f9e'],
-  ['Målmand',         ['gkDiving','gkHandling','gkKicking','gkPositioning','gkReflexes'], '#4dd0c1']
+var FACE = ['pac','sho','pas','dri','def','phy'];
+var FACE_IDX = FACE.map(function(k){ return SI[k]; });
+var FACE_LABEL    = ['PAC','SHO','PAS','DRI','DEF','PHY'];
+var FACE_LABEL_GK = ['DIV','HAN','KIC','REF','SPE','POS'];
+var FACE_DA    = ['Fart','Afslutning','Pasninger','Dribling','Forsvar','Fysik'];
+var FACE_DA_GK = ['Udspring','Boldsikkerhed','Spark','Reflekser','Fart','Placering'];
+
+var POS_GROUPS = [
+  ['Forsvar',  ['GK','CB','LB','RB']],
+  ['Midtbane', ['LM','CDM','CM','CAM','RM']],
+  ['Angreb',   ['LW','RW','ST']]
 ];
-var STAT_DA = {
-  acceleration:'Acceleration', sprintSpeed:'Topfart', positioning:'Placering',
-  finishing:'Afslutning', shotPower:'Skudstyrke', longShots:'Langskud', volleys:'Flugtninger',
-  penalties:'Straffespark', vision:'Overblik', crossing:'Indlæg', freeKickAccuracy:'Frispark',
-  shortPassing:'Korte afl.', longPassing:'Lange afl.', curve:'Skru', agility:'Adræthed',
-  balance:'Balance', reactions:'Reaktioner', ballControl:'Boldkontrol', dribbling:'Dribling',
-  composure:'Koldblodighed', interceptions:'Aflusninger', headingAccuracy:'Hovedstød',
-  defensiveAwareness:'Def. spilforståelse', standingTackle:'Stående tackling',
-  slidingTackle:'Glidende tackling', jumping:'Springstyrke', stamina:'Udholdenhed',
-  strength:'Styrke', aggression:'Aggression', gkDiving:'Udspring', gkHandling:'Boldsikkerhed',
-  gkKicking:'Spark', gkPositioning:'Placering', gkReflexes:'Reflekser'
-};
+var ALL_POS = ['GK','CB','LB','RB','LM','CDM','CM','CAM','RM','LW','RW','ST'];
+var POS_SHORTCUTS = [
+  ['CDM \\ CM \\ CAM', ['CDM','CM','CAM']],
+  ['LM \\ RM',         ['LM','RM']],
+  ['LW \\ RW',         ['LW','RW']],
+  ['Angribere',        ['LW','RW','ST']],
+  ['Midtbane',         ['LM','CDM','CM','CAM','RM']],
+  ['Forsvar',          ['GK','CB','LB','RB']]
+];
 
 /* EA's koder oversat. Indeks 0 = ukendt (spilleren mangler i berigelsen). */
 var ACCEL_DA = ['Ukendt','Eksplosiv','Mest eksplosiv','Kontrolleret eksplosiv',
                 'Kontrolleret','Kontrolleret lang','Mest lang','Lang'];
-/* De tre hovedtyper er dem folk filtrerer på; varianterne grupperes under dem. */
-var ACCEL_GROUPS = [
-  ['Eksplosiv',    [1,2,3]],
-  ['Kontrolleret', [4]],
-  ['Lang',         [5,6,7]]
+var ACCEL_GROUPS = [['Eksplosiv',[1,2,3]],['Kontrolleret',[4]],['Lang',[5,6,7]]];
+
+var NOW = new Date();
+
+/* Egenskabsgrupper. Totalen er EA's egen ansigtsstat, ikke et gennemsnit —
+   derfor står face-indekset i gruppen. */
+var GROUPS_OUT = [
+  ['Fart',       0, [['Acceleration','acceleration'],['Sprintfart','sprintSpeed']]],
+  ['Afslutning', 1, [['Afslutning','finishing'],['Skudkraft','shotPower'],['Langskud','longShots'],
+                     ['Volley','volleys'],['Straffespark','penalties'],['Placering','positioning']]],
+  ['Pasninger',  2, [['Vision','vision'],['Aflevering','shortPassing'],['Indlæg','crossing'],
+                     ['Langpas','longPassing'],['Skru','curve'],['Frispark','freeKickAccuracy']]],
+  ['Dribling',   3, [['Boldkontrol','ballControl'],['Driblinger','dribbling'],['Smidighed','agility'],
+                     ['Balance','balance'],['Reaktion','reactions'],['Ro','composure']]],
+  ['Forsvar',    4, [['Interception','interceptions'],['Tackling','standingTackle'],
+                     ['Glidende tackling','slidingTackle'],['Hovedstød','headingAccuracy'],
+                     ['Markering','defensiveAwareness']]],
+  ['Fysik',      5, [['Styrke','strength'],['Udholdenhed','stamina'],['Aggression','aggression'],
+                     ['Spring','jumping']]]
+];
+var GROUPS_GK = [
+  ['Målmand', null, [['Udspring','gkDiving'],['Boldsikkerhed','gkHandling'],['Spark','gkKicking'],
+                     ['Placering','gkPositioning'],['Reflekser','gkReflexes']]],
+  ['Fart',    4,    [['Acceleration','acceleration'],['Sprintfart','sprintSpeed']]],
+  ['Reaktion',null, [['Reaktioner','reactions'],['Koldblodighed','composure']]],
+  ['Fysik',   null, [['Styrke','strength'],['Udholdenhed','stamina'],['Spring','jumping'],
+                     ['Aggression','aggression']]]
+];
+/* De 29 markspiller-egenskaber tæller til "samlede egenskaber". */
+var SUM_KEYS = [];
+GROUPS_OUT.forEach(function(g){ g[2].forEach(function(r){ if(SUM_KEYS.indexOf(r[1])<0) SUM_KEYS.push(r[1]); }); });
+
+/* Kemistilene og de ansigtsstats de løfter. */
+var CHEM_STYLES = [
+  ['Basis',[0,1,2,3,4,5]],['Jæger',[0,1]],['Skygge',[0,4]],['Motor',[0,2,3]],
+  ['Falk',[0,1,5]],['Arkitekt',[2,5]],['Sniper',[1,3]],['Maestro',[1,2,3]],
+  ['Anker',[0,4,5]],['Vagt',[4,5]],['Katalysator',[0,2]],['Murbryder',[1,2]]
 ];
 
-var SI = {}; S.forEach(function(k,i){ SI[k]=i; });
-var FACE_IDX = FACE.map(function(k){ return SI[k]; });
-
 /* ---------- Hjælpere ---------- */
-function img(tpl,id){ return tpl.replace('{id}',id); }
-function portrait(id){ return img(D.meta.portrait,id); }
-function nation(p){ return D.nations[p[NAT]] || ['',''] ; }
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function norm(s){
+  return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+}
+function nf(n){ return Number(n).toLocaleString('da-DK'); }
+function nation(p){ return D.nations[p[NAT]] || ['','']; }
 function club(p){ return D.clubs[p[CLUB]] || ['','']; }
 function league(p){ return D.leagues[p[LEAGUE]] || ''; }
-function tier(o){ return o>=75?'gold':(o>=65?'silver':'bronze'); }
+function portrait(id){ return D.meta.portrait.replace('{id}', id); }
+function tier(o){ return o>=75?'g':(o>=65?'s':'b'); }
+function isGK(p){ return p[POS]==='GK'; }
+function delta(p){ return p[PREV]==null ? null : p[OVR]-p[PREV]; }
 function age(p){
   if(!p[BORN]) return null;
   var b=new Date(p[BORN]+'T00:00:00Z'), a=NOW.getUTCFullYear()-b.getUTCFullYear();
@@ -750,695 +679,714 @@ function age(p){
   if(m<0 || (m===0 && NOW.getUTCDate()<b.getUTCDate())) a--;
   return a;
 }
-function esc(s){
-  return String(s==null?'':s).replace(/[&<>"']/g,function(c){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-  });
-}
-function norm(s){
-  /* Fjerner diakritiske tegn, så "Mbappe" også finder "Mbappé". */
-  return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
-}
-
-/* Søgenøgle bygges én gang pr. spiller og caches på tuplen. */
-var KEY = 22;   /* cache-plads efter sidste rigtige felt */
 function key(p){
   if(p[KEY]===undefined){
-    p[KEY] = norm(p[NAME]+' '+club(p)[0]+' '+nation(p)[0]+' '+league(p)+' '+p[POS]);
+    p[KEY]=norm(p[NAME]+' '+club(p)[0]+' '+nation(p)[0]+' '+league(p)+' '+p[POS]);
   }
   return p[KEY];
 }
+function statColor(v){
+  return v>=90?'#3DDC84' : v>=80?'#9BD94F' : v>=70?'#5AA6FF' : v>=60?'#FF9A3D' : '#F0554E';
+}
 
-/* ---------- Filtertilstand ---------- */
-var F = {
-  q:'', ovrMin:40, ovrMax:99, pos:[], altPos:false, type:'', gender:'',
-  league:'', club:'', nation:'', foot:'', skills:1, weak:1, ageMax:45,
-  hMin:150, accel:[], change:'',
-  stats:{}, ps:[], psPlusOnly:false, sort:'ovr'
+/* Kortnavnet: efternavn(e). Nogle spillere kendes på noget andet. */
+var SHORT_OVERRIDE = {
+  'Vinícius Júnior':'Vini Jr.', 'Caroline Graham Hansen':'G. Hansen',
+  'Rodri':'Rodri', 'Pedri':'Pedri', 'Gavi':'Gavi', 'Lamine Yamal':'Yamal',
+  'Alexia Putellas':'Putellas', 'Aitana Bonmatí':'Bonmatí'
+};
+function shortName(p){
+  var n=p[NAME];
+  if(SHORT_OVERRIDE[n]) return SHORT_OVERRIDE[n];
+  var parts=n.trim().split(/\s+/);
+  return parts.length<2 ? n : parts.slice(1).join(' ');
+}
+function initials(p){
+  var parts=p[NAME].trim().split(/\s+/);
+  return (parts[0].charAt(0) + (parts.length>1 ? parts[parts.length-1].charAt(0) : '')).toUpperCase();
+}
+window.futFace = function(img, ok){
+  if(ok) img.parentNode.classList.add('has-face'); else img.remove();
 };
 
-/* Datasættet har ikke altid alle felter — se README. Funktioner uden data
-   skjules frem for at stå tomme. */
-var HAS_PREV = false, HAS_ACCEL = false, HAS_HEIGHT = false;
-(function(){
-  for(var i=0;i<P.length;i++){
-    if(P[i][PREV]!=null) HAS_PREV=true;
-    if(P[i][ACCEL]) HAS_ACCEL=true;
-    if(P[i][HEIGHT]) HAS_HEIGHT=true;
-    if(HAS_PREV&&HAS_ACCEL&&HAS_HEIGHT) break;
+var byId={}; P.forEach(function(p){ byId[p[ID]]=p; });
+var HAS_PREV_N=0; P.forEach(function(p){ if(p[PREV]!=null) HAS_PREV_N++; });
+var BY_OVR = P.slice().sort(function(a,b){ return b[OVR]-a[OVR] || a[RANK]-b[RANK]; });
+
+/* ==========================================================================
+   Kortet
+   ========================================================================== */
+function cardHTML(p){
+  var gk=isGK(p), lab=gk?FACE_LABEL_GK:FACE_LABEL, st=p[STATS];
+  var keys='', vals='';
+  for(var i=0;i<6;i++){
+    keys+='<span class="k-k">'+lab[i]+'</span>';
+    vals+='<span class="k-v">'+st[FACE_IDX[i]]+'</span>';
   }
-})();
-function delta(p){ return p[PREV]==null ? null : p[OVR]-p[PREV]; }
-
-/* ---------- Byg filter-UI ---------- */
-var posChips = document.getElementById('posChips');
-POSITIONS.forEach(function(pos){
-  var b=document.createElement('button');
-  b.className='chip'; b.type='button'; b.textContent=pos;
-  b.setAttribute('aria-pressed','false'); b.dataset.pos=pos;
-  b.addEventListener('click',function(){
-    var i=F.pos.indexOf(pos);
-    if(i>=0){F.pos.splice(i,1);b.setAttribute('aria-pressed','false');}
-    else{F.pos.push(pos);b.setAttribute('aria-pressed','true');}
-    update();
-  });
-  posChips.appendChild(b);
-});
-
-var accelChips=document.getElementById('accelChips');
-ACCEL_GROUPS.forEach(function(g){
-  var b=document.createElement('button');
-  b.className='chip'; b.type='button'; b.textContent=g[0];
-  b.setAttribute('aria-pressed','false'); b.dataset.accel=g[1].join(',');
-  b.addEventListener('click',function(){
-    var key=g[1].join(','), i=F.accel.indexOf(key);
-    if(i>=0){F.accel.splice(i,1);b.setAttribute('aria-pressed','false');}
-    else{F.accel.push(key);b.setAttribute('aria-pressed','true');}
-    update();
-  });
-  accelChips.appendChild(b);
-});
-
-var statFilters=document.getElementById('statFilters');
-FACE.forEach(function(k){
-  var row=document.createElement('div'); row.className='statrow';
-  row.innerHTML='<span>'+FACE_LABEL[k]+'</span><input type="range" min="0" max="99" value="0" data-stat="'+k+'"><span class="v">0</span>';
-  var inp=row.querySelector('input'), out=row.querySelector('.v');
-  inp.addEventListener('input',function(){
-    out.textContent=inp.value;
-    if(+inp.value===0) delete F.stats[k]; else F.stats[k]=+inp.value;
-    update();
-  });
-  statFilters.appendChild(row);
-});
-
-var leagueSel=document.getElementById('league');
-D.leagues.slice().map(function(n,i){return [n,i];})
-  .sort(function(a,b){return a[0].localeCompare(b[0],'da');})
-  .forEach(function(pair){
-    var o=document.createElement('option'); o.value=pair[1]; o.textContent=pair[0];
-    leagueSel.appendChild(o);
-  });
-
-function fillList(listId, map){
-  var frag=document.createDocumentFragment(), names=[];
-  for(var id in map){ names.push(map[id][0]); }
-  names.sort(function(a,b){return a.localeCompare(b,'da');}).forEach(function(n){
-    var o=document.createElement('option'); o.value=n; frag.appendChild(o);
-  });
-  document.getElementById(listId).appendChild(frag);
+  return '<a class="kort t-'+tier(p[OVR])+'" href="#/spiller/'+p[ID]+'"'+
+      ' aria-label="'+esc(p[NAME])+', '+p[OVR]+' '+p[POS]+'">'+
+    '<span class="k-top">'+
+      '<span class="k-l"><b class="k-ovr">'+p[OVR]+'</b><span class="k-pos">'+p[POS]+'</span></span>'+
+      '<span class="k-alt">'+p[ALT].slice(0,3).map(function(a){return '<i>'+a+'</i>';}).join('')+'</span>'+
+    '</span>'+
+    '<span class="k-shot">'+
+      '<span class="k-ini">'+esc(initials(p))+'</span>'+
+      '<img class="k-face" src="'+portrait(p[ID])+'" alt="" loading="lazy" decoding="async"'+
+        ' onload="futFace(this,1)" onerror="futFace(this,0)">'+
+    '</span>'+
+    '<span class="k-name">'+esc(shortName(p))+'</span>'+
+    '<span class="k-stats">'+keys+vals+'</span>'+
+    '<span class="k-foot"><i>'+(p[FOOT]===2?'V':'H')+'</i><i>'+p[SKILLS]+'★</i><i>'+p[WEAK]+'★</i></span>'+
+  '</a>';
 }
-fillList('clubList', D.clubs);
-fillList('nationList', D.nations);
 
-var psList=document.getElementById('psList');
-function renderPsList(filter){
-  psList.innerHTML='';
-  var f=norm(filter||'');
-  D.playstyles.forEach(function(ps,i){
-    if(f && norm(ps[0]).indexOf(f)<0) return;
-    var l=document.createElement('label'); l.className='psitem';
-    l.innerHTML='<input type="checkbox" value="'+i+'"'+(F.ps.indexOf(i)>=0?' checked':'')+'>'+
-      (ps[1]?'<img src="'+esc(ps[1])+'" alt="" loading="lazy">':'')+
-      '<span>'+esc(ps[0])+'</span>';
-    l.querySelector('input').addEventListener('change',function(e){
-      var v=+e.target.value, k=F.ps.indexOf(v);
-      if(e.target.checked && k<0) F.ps.push(v);
-      else if(!e.target.checked && k>=0) F.ps.splice(k,1);
-      update();
-    });
-    psList.appendChild(l);
-  });
+/* ==========================================================================
+   Forside
+   ========================================================================== */
+var HOME_TABS = [
+  ['Højeste rating', function(){ return BY_OVR; }],
+  ['Største spring', function(){
+      return P.filter(function(p){ return delta(p)!=null && delta(p)>0; })
+              .sort(function(a,b){ return delta(b)-delta(a) || b[OVR]-a[OVR]; }); }],
+  ['Nye i FC 27',    function(){
+      return BY_OVR.filter(function(p){ return p[PREV]==null; }); }],
+  ['Kvindefodbold',  function(){ return BY_OVR.filter(function(p){ return p[GENDER]===1; }); }],
+  ['Målmænd',        function(){ return BY_OVR.filter(isGK); }]
+];
+var homeTab = HOME_TABS[0][0];
+
+function renderHome(){
+  var tabs=document.getElementById('homeTabs');
+  tabs.innerHTML = HOME_TABS.map(function(t){
+    return '<button class="pill'+(t[0]===homeTab?' on':'')+'" data-t="'+esc(t[0])+'">'+esc(t[0])+'</button>';
+  }).join('');
+
+  var list = HOME_TABS.filter(function(t){ return t[0]===homeTab; })[0][1]().slice(0,12);
+  document.getElementById('homeCards').innerHTML = list.map(function(p){ return cardHTML(p); }).join('');
+
+  document.getElementById('popNames').innerHTML = BY_OVR.slice(0,4).map(function(p){
+    return '<a href="#/spiller/'+p[ID]+'">'+esc(p[NAME])+'</a>';
+  }).join(' ');
+
+  /* Største ratingspring — det vi rent faktisk har historik på. */
+  var moved = P.filter(function(p){ return delta(p)!=null && delta(p)!==0; })
+    .sort(function(a,b){ return Math.abs(delta(b))-Math.abs(delta(a)) || b[OVR]-a[OVR]; }).slice(0,6);
+  document.getElementById('pulsList').innerHTML = moved.map(function(p){
+    var d=delta(p);
+    return '<a class="p-row" href="#/spiller/'+p[ID]+'">'+
+      '<span class="rat sm '+tier(p[OVR])+'">'+p[OVR]+'</span>'+
+      '<span class="mid"><span class="nm">'+esc(p[NAME])+'</span>'+
+        '<span class="mt">'+esc(club(p)[0])+' · '+p[POS]+'</span></span>'+
+      '<span class="rt"><b>'+p[PREV]+' → '+p[OVR]+'</b>'+
+        '<span class="'+(d>0?'up':'down')+'">'+(d>0?'+':'')+d+'</span></span></a>';
+  }).join('');
+
+  document.getElementById('topList').innerHTML = BY_OVR.slice(0,6).map(function(p,i){
+    return '<a class="p-row" href="#/spiller/'+p[ID]+'">'+
+      '<span class="rk">'+(i+1)+'</span>'+
+      '<span class="rat sm '+tier(p[OVR])+'">'+p[OVR]+'</span>'+
+      '<span class="mid"><span class="nm">'+esc(p[NAME])+'</span>'+
+        '<span class="mt">'+esc(club(p)[0])+'</span></span>'+
+      '<span class="pos">'+p[POS]+'</span></a>';
+  }).join('');
 }
-renderPsList('');
-document.getElementById('psSearch').addEventListener('input',function(e){ renderPsList(e.target.value); });
+document.getElementById('homeTabs').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return;
+  homeTab=b.dataset.t; renderHome();
+});
 
-/* EA udgiver ikke altid PlayStyles sammen med ratings — i FC 27-droppet er
-   playerAbilities tomt for alle spillere. Skjul filteret helt frem for at vise
-   en tom liste; det dukker op af sig selv, når et datasæt igen har dem. */
-var HAS_PS = D.playstyles.length > 0;
-if(!HAS_PS) document.getElementById('psGroup').hidden = true;
+/* ==========================================================================
+   Spillere — tilstand, filtre og tabel
+   ========================================================================== */
+var F = {
+  q:'', posMode:'Alle', pos:[], leagues:[], nations:[], clubs:[],
+  ratMin:'', ratMax:'', dMin:'', dMax:'', onlyNew:false,
+  minSk:0, minWf:0, statMin:{}, statMax:{},
+  accel:[], foot:'', gender:'', hMin:'', hMax:'', ageMin:'', ageMax:'',
+  sort:'Rating', limit:15
+};
+var openFilter=null, lgQ='', natQ='', clubQ='';
 
-var EDITION = (D.meta && D.meta.edition) || 'denne udgave';
-var PREV_EDITION = (D.meta && D.meta.previousEdition) || 'forrige udgave';
-document.getElementById('prevEd').textContent = PREV_EDITION;
-if(!HAS_ACCEL)  document.getElementById('accelChips').parentNode.hidden = true;
-if(!HAS_PREV)   document.getElementById('changeGroup').hidden = true;
-if(!HAS_HEIGHT) document.getElementById('heightField').hidden = true;
+var SORTS = {
+  'Rating':      function(a,b){ return b[OVR]-a[OVR] || a[RANK]-b[RANK]; },
+  'Ratingspring':function(a,b){
+      var x=delta(a), y=delta(b);
+      if(x==null && y==null) return b[OVR]-a[OVR];
+      if(x==null) return 1; if(y==null) return -1;
+      return y-x || b[OVR]-a[OVR]; },
+  'Navn':        function(a,b){ return a[NAME].localeCompare(b[NAME],'da'); },
+  'Alder':       function(a,b){
+      var x=age(a), y=age(b);
+      if(x==null && y==null) return b[OVR]-a[OVR];
+      if(x==null) return 1; if(y==null) return -1;
+      return x-y || b[OVR]-a[OVR]; }
+};
 
-/* Dækningen er delvis, fordi kilden ikke har alle spillere. Sig det i stedet
-   for at lade brugeren tro at et filter er gået i stykker. */
-(function(){
-  function pct(n){ return Math.round(n/P.length*100); }
-  if(HAS_ACCEL){
-    var n=0; P.forEach(function(p){ if(p[ACCEL]) n++; });
-    document.getElementById('accelHint').textContent =
-      'Kendt for '+n.toLocaleString('da-DK')+' af '+P.length.toLocaleString('da-DK')+
-      ' spillere ('+pct(n)+' %). Resten er filtreret fra, når typen er valgt.';
+function fitsPos(p){
+  if(!F.pos.length) return true;
+  for(var i=0;i<F.pos.length;i++){
+    var v=F.pos[i];
+    if(F.posMode!=='Alternativ' && p[POS]===v) return true;
+    if(F.posMode!=='Primær' && p[ALT].indexOf(v)>=0) return true;
   }
-  if(HAS_PREV){
-    var m=0,nw=0;
-    P.forEach(function(p){ if(p[PREV]==null) nw++; else if(p[OVR]!==p[PREV]) m++; });
-    document.getElementById('changeHint').textContent =
-      m.toLocaleString('da-DK')+' spillere har fået ny rating, '+
-      nw.toLocaleString('da-DK')+' er nye i '+EDITION+'.';
-  }
-})();
-
-/* ---------- Simple bindings ---------- */
-function seg(id, prop){
-  var el=document.getElementById(id);
-  el.addEventListener('click',function(e){
-    var b=e.target.closest('button'); if(!b) return;
-    [].forEach.call(el.children,function(c){ c.setAttribute('aria-pressed', c===b?'true':'false'); });
-    F[prop]=b.dataset.v; update();
-  });
+  return false;
 }
-seg('typeSeg','type'); seg('genderSeg','gender'); seg('footSeg','foot');
-
-function bind(id, fn, ev){
-  document.getElementById(id).addEventListener(ev||'input', fn);
-}
-var qEl=document.getElementById('q'), qTimer;
-bind('q',function(){ clearTimeout(qTimer); qTimer=setTimeout(function(){ F.q=norm(qEl.value.trim()); update(); },140); });
-
-var ovrMin=document.getElementById('ovrMin'), ovrMax=document.getElementById('ovrMax');
-function ovrChanged(){
-  if(+ovrMin.value > +ovrMax.value){
-    if(document.activeElement===ovrMin) ovrMax.value=ovrMin.value; else ovrMin.value=ovrMax.value;
-  }
-  F.ovrMin=+ovrMin.value; F.ovrMax=+ovrMax.value;
-  document.getElementById('ovrMinV').textContent=F.ovrMin+'+';
-  document.getElementById('ovrMaxV').textContent='–'+F.ovrMax;
-  update();
-}
-ovrMin.addEventListener('input',ovrChanged); ovrMax.addEventListener('input',ovrChanged);
-
-bind('altPos',function(e){ F.altPos=e.target.checked; update(); },'change');
-bind('psPlusOnly',function(e){ F.psPlusOnly=e.target.checked; update(); },'change');
-bind('league',function(e){ F.league=e.target.value; update(); },'change');
-bind('club',function(e){ F.club=norm(e.target.value.trim()); update(); });
-bind('nation',function(e){ F.nation=norm(e.target.value.trim()); update(); });
-bind('sort',function(e){ F.sort=e.target.value; update(); },'change');
-bind('skills',function(e){ F.skills=+e.target.value; document.getElementById('skillsV').textContent=e.target.value; update(); });
-bind('weak',function(e){ F.weak=+e.target.value; document.getElementById('weakV').textContent=e.target.value; update(); });
-bind('ageMax',function(e){
-  F.ageMax=+e.target.value;
-  document.getElementById('ageMaxV').textContent = F.ageMax>=45 ? 'Alle' : F.ageMax+' år';
-  update();
-});
-
-seg('changeSeg','change');
-bind('hMin',function(e){
-  F.hMin=+e.target.value;
-  document.getElementById('hMinV').textContent = F.hMin<=150 ? 'Alle' : F.hMin+' cm';
-  update();
-});
-
-document.getElementById('toggleFilters').addEventListener('click',function(){
-  var f=document.getElementById('filters'), open=f.classList.toggle('open');
-  this.setAttribute('aria-expanded', open?'true':'false');
-});
-
-document.getElementById('reset').addEventListener('click',function(){
-  location.hash=''; location.reload();
-});
-
-/* ---------- Filtrering ---------- */
 function matches(p){
-  if(p[OVR]<F.ovrMin || p[OVR]>F.ovrMax) return false;
-  if(F.type!=='' && p[PTYPE]!==+F.type) return false;
-  if(F.gender!=='' && p[GENDER]!==+F.gender) return false;
-  if(F.foot!=='' && p[FOOT]!==+F.foot) return false;
-  if(p[SKILLS]<F.skills || p[WEAK]<F.weak) return false;
-  if(F.league!=='' && p[LEAGUE]!==+F.league) return false;
-
-  if(F.pos.length){
-    var ok = F.pos.indexOf(p[POS])>=0;
-    if(!ok && F.altPos){
-      for(var i=0;i<p[ALT].length;i++){ if(F.pos.indexOf(p[ALT][i])>=0){ ok=true; break; } }
-    }
-    if(!ok) return false;
-  }
-  if(F.ageMax<45){ var a=age(p); if(a===null || a>F.ageMax) return false; }
-  if(F.hMin>150 && (!p[HEIGHT] || p[HEIGHT]<F.hMin)) return false;
-  if(F.accel.length){
-    var hit=false;
-    for(var ai=0;ai<F.accel.length;ai++){
-      if(F.accel[ai].split(',').indexOf(String(p[ACCEL]))>=0){ hit=true; break; }
-    }
-    if(!hit) return false;
-  }
-  if(F.change){
-    var dv=delta(p);
-    if(F.change==='new'  && dv!==null) return false;
-    if(F.change==='up'   && !(dv>0))   return false;
-    if(F.change==='down' && !(dv<0))   return false;
-  }
-  if(F.club && norm(club(p)[0]).indexOf(F.club)<0) return false;
-  if(F.nation && norm(nation(p)[0]).indexOf(F.nation)<0) return false;
-
-  for(var k in F.stats){ if(p[STATS][SI[k]] < F.stats[k]) return false; }
-
-  if(F.ps.length){
-    var pool = F.psPlusOnly ? p[PSP] : p[PS].concat(p[PSP]);
-    for(var j=0;j<F.ps.length;j++){ if(pool.indexOf(F.ps[j])<0) return false; }
-  }
   if(F.q && key(p).indexOf(F.q)<0) return false;
+  if(!fitsPos(p)) return false;
+  if(F.leagues.length && F.leagues.indexOf(String(p[LEAGUE]))<0) return false;
+  if(F.nations.length && F.nations.indexOf(String(p[NAT]))<0) return false;
+  if(F.clubs.length   && F.clubs.indexOf(String(p[CLUB]))<0) return false;
+  if(F.ratMin!=='' && p[OVR] < +F.ratMin) return false;
+  if(F.ratMax!=='' && p[OVR] > +F.ratMax) return false;
+
+  var d=delta(p);
+  if(F.onlyNew){ if(d!==null) return false; }
+  else if(F.dMin!=='' || F.dMax!==''){
+    if(d===null) return false;
+    if(F.dMin!=='' && d < +F.dMin) return false;
+    if(F.dMax!=='' && d > +F.dMax) return false;
+  }
+  if(F.minSk && p[SKILLS] < F.minSk) return false;
+  if(F.minWf && p[WEAK]   < F.minWf) return false;
+
+  for(var i=0;i<6;i++){
+    var k=FACE[i], v=p[STATS][FACE_IDX[i]];
+    if(F.statMin[k]!==undefined && F.statMin[k]!=='' && v < +F.statMin[k]) return false;
+    if(F.statMax[k]!==undefined && F.statMax[k]!=='' && v > +F.statMax[k]) return false;
+  }
+  if(F.accel.length && F.accel.indexOf(String(p[ACCEL]||0))<0) return false;
+  if(F.foot   && String(p[FOOT])!==F.foot) return false;
+  if(F.gender && String(p[GENDER])!==F.gender) return false;
+  if(F.hMin!=='' && (!p[HEIGHT] || p[HEIGHT] < +F.hMin)) return false;
+  if(F.hMax!=='' && (!p[HEIGHT] || p[HEIGHT] > +F.hMax)) return false;
+  if(F.ageMin!=='' || F.ageMax!==''){
+    var a=age(p); if(a==null) return false;
+    if(F.ageMin!=='' && a < +F.ageMin) return false;
+    if(F.ageMax!=='' && a > +F.ageMax) return false;
+  }
   return true;
 }
 
-var SORTS = {
-  'ovr':      function(a,b){ return b[OVR]-a[OVR] || a[RANK]-b[RANK]; },
-  'ovr-asc':  function(a,b){ return a[OVR]-b[OVR]; },
-  'skills':   function(a,b){ return b[SKILLS]-a[SKILLS] || b[OVR]-a[OVR]; },
-  'weak':     function(a,b){ return b[WEAK]-a[WEAK] || b[OVR]-a[OVR]; },
-  'young':    function(a,b){ return (b[BORN]||'').localeCompare(a[BORN]||''); },
-  'old':      function(a,b){ return (a[BORN]||'').localeCompare(b[BORN]||''); },
-  'name':     function(a,b){ return a[NAME].localeCompare(b[NAME],'da'); },
-  /* Nye spillere har ingen ændring og sorteres bagerst i begge retninger. */
-  'change':     function(a,b){ var x=delta(a),y=delta(b);
-                  return (y===null?-99:y)-(x===null?-99:x) || b[OVR]-a[OVR]; },
-  'change-asc': function(a,b){ var x=delta(a),y=delta(b);
-                  return (x===null?99:x)-(y===null?99:y) || b[OVR]-a[OVR]; }
-};
-FACE.forEach(function(k){
-  var i=SI[k];
-  SORTS[k]=function(a,b){ return b[STATS][i]-a[STATS][i] || b[OVR]-a[OVR]; };
+var filtered=[];
+function applyFilters(){
+  filtered = P.filter(matches);
+  filtered.sort(SORTS[F.sort]);
+}
+
+/* ---- Filterchips ---- */
+var CHIPS = [
+  ['Positioner',   function(){ return F.pos.length; }],
+  ['Ligaer',       function(){ return F.leagues.length; }],
+  ['Nationer',     function(){ return F.nations.length; }],
+  ['Klubber',      function(){ return F.clubs.length; }],
+  ['Ratingspring', function(){ return (F.onlyNew?1:0)+(F.dMin!==''?1:0)+(F.dMax!==''?1:0); }],
+  ['Rating',       function(){ return (F.ratMin!==''?1:0)+(F.ratMax!==''?1:0); }],
+  ['Tricks & ben', function(){ return (F.minSk?1:0)+(F.minWf?1:0); }],
+  ['Stats',        function(){
+      var n=0; FACE.forEach(function(k){
+        if(F.statMin[k]) n++; if(F.statMax[k]) n++; }); return n; }],
+  ['Krop & løb',   function(){
+      return F.accel.length+(F.foot?1:0)+(F.gender?1:0)+
+        (F.hMin!==''?1:0)+(F.hMax!==''?1:0)+(F.ageMin!==''?1:0)+(F.ageMax!==''?1:0); }]
+];
+
+function renderChips(){
+  document.getElementById('fchips').innerHTML = CHIPS.map(function(c){
+    var n=c[1](), cls = openFilter===c[0] ? 'open' : (n ? 'has' : '');
+    return '<button class="fchip '+cls+'" data-c="'+esc(c[0])+'">'+esc(c[0])+(n&&openFilter!==c[0]?' ('+n+')':'')+'</button>';
+  }).join('');
+}
+
+function cbList(items, selected, action, cls){
+  return '<div class="cols '+(cls||'wide')+'">'+items.map(function(it){
+    var on = selected.indexOf(it[0])>=0;
+    return '<button class="cbrow'+(on?' on':'')+'" data-a="'+action+'" data-v="'+esc(it[0])+'">'+
+      '<span class="cb">✓</span><span class="t">'+esc(it[1])+'</span></button>';
+  }).join('')+'</div>';
+}
+function numFld(label, act, val){
+  return '<label class="fld"><input type="number" data-num="'+act+'" value="'+esc(val)+'" placeholder="'+esc(label)+'" aria-label="'+esc(label)+'"></label>';
+}
+
+var LEAGUE_ITEMS = D.leagues.map(function(n,i){ return [String(i), n]; })
+  .sort(function(a,b){ return a[1].localeCompare(b[1],'da'); });
+var NATION_ITEMS = Object.keys(D.nations).map(function(k){ return [k, D.nations[k][0]]; })
+  .sort(function(a,b){ return a[1].localeCompare(b[1],'da'); });
+var CLUB_ITEMS = Object.keys(D.clubs).map(function(k){ return [k, D.clubs[k][0]]; })
+  .sort(function(a,b){ return a[1].localeCompare(b[1],'da'); });
+
+function panelHTML(name){
+  var h='';
+  if(name==='Positioner'){
+    h+='<div class="modes">'+['Alle','Primær','Alternativ'].map(function(m){
+      return '<button class="mode'+(F.posMode===m?' on':'')+'" data-a="posmode" data-v="'+m+'">'+m+'</button>';
+    }).join('')+'</div>';
+    h+='<div class="posgrid">'+POS_GROUPS.map(function(g){
+      return '<div><div class="lbl">'+g[0]+'</div>'+
+        cbList(g[1].map(function(x){return [x,x];}), F.pos, 'pos', 'narrow')+'</div>';
+    }).join('')+'</div>';
+    h+='<div class="short"><span class="lbl" style="margin:0 4px 0 0;align-self:center">Genveje</span>'+
+      POS_SHORTCUTS.map(function(s,i){
+        var on=s[1].every(function(x){ return F.pos.indexOf(x)>=0; });
+        return '<button class="mini'+(on?' on':'')+'" data-a="posset" data-v="'+i+'">'+esc(s[0])+'</button>';
+      }).join('')+'</div>';
+  }
+  else if(name==='Ligaer' || name==='Nationer' || name==='Klubber'){
+    var conf = name==='Ligaer'   ? [LEAGUE_ITEMS, F.leagues, 'league', lgQ,   'lgq',   'Søg liga…', 'wide']
+             : name==='Nationer' ? [NATION_ITEMS, F.nations, 'nation', natQ,  'natq',  'Søg nation…','narrow']
+             :                     [CLUB_ITEMS,   F.clubs,   'club',   clubQ, 'clubq', 'Søg klub…',  'wide'];
+    var t=norm(conf[3]);
+    var items = t ? conf[0].filter(function(x){ return norm(x[1]).indexOf(t)>=0; }) : conf[0];
+    h+='<label class="fld"><span class="gl" aria-hidden="true">⌕</span>'+
+       '<input type="search" data-q="'+conf[4]+'" value="'+esc(conf[3])+'" placeholder="'+conf[5]+'" aria-label="'+conf[5]+'"></label>';
+    h+='<div class="scroll">'+(items.length ? cbList(items, conf[1], conf[2], conf[6])
+        : '<p class="subline">Ingen match.</p>')+'</div>';
+  }
+  else if(name==='Ratingspring'){
+    h+='<div class="range">'+numFld('Mindst (fx 1)','dMin',F.dMin)+numFld('Højst (fx 5)','dMax',F.dMax)+'</div>';
+    var QS=[['Nye i FC 27','ny'],['+1 – +2','1:2'],['+3 – +5','3:5'],['+6 og op','6:'],
+            ['Uændret','0:0'],['Nedgraderet',':-1']];
+    h+='<div class="short">'+QS.map(function(q){
+      var on = q[1]==='ny' ? F.onlyNew : (!F.onlyNew && F.dMin+':'+F.dMax===q[1]);
+      return '<button class="mini'+(on?' on':'')+'" data-a="dquick" data-v="'+q[1]+'">'+esc(q[0])+'</button>';
+    }).join('')+'</div>';
+    h+='<p class="subline" style="margin-top:12px">'+nf(HAS_PREV_N)+' af '+nf(P.length)+
+       ' kort findes også i FC 26. Resten er nye i FC 27.</p>';
+  }
+  else if(name==='Rating'){
+    h+='<div class="range">'+numFld('Min. rating','ratMin',F.ratMin)+numFld('Maks. rating','ratMax',F.ratMax)+'</div>';
+    var RQ=[['Bronze 47–64','47:64'],['Sølv 65–74','65:74'],['Guld 75–83','75:83'],
+            ['84–86','84:86'],['87–88','87:88'],['89+','89:']];
+    h+='<div class="short">'+RQ.map(function(q){
+      var on = F.ratMin+':'+F.ratMax===q[1];
+      return '<button class="mini'+(on?' on':'')+'" data-a="rquick" data-v="'+q[1]+'">'+esc(q[0])+'</button>';
+    }).join('')+'</div>';
+  }
+  else if(name==='Tricks & ben'){
+    h+='<div class="posgrid">'+
+      [['Min. tricks','sk',F.minSk],['Min. svagt ben','wf',F.minWf]].map(function(g){
+        return '<div><div class="lbl">'+g[0]+'</div><div class="range">'+
+          [1,2,3,4,5].map(function(n){
+            return '<button class="mini'+(g[2]===n?' on':'')+'" style="flex:1" data-a="star'+g[1]+'" data-v="'+n+'">'+n+'★</button>';
+          }).join('')+'</div></div>';
+      }).join('')+'</div>';
+  }
+  else if(name==='Stats'){
+    h+='<div class="statgrid">'+FACE.map(function(k,i){
+      return '<div class="statbox"><div class="h">'+FACE_LABEL[i]+' · '+FACE_DA[i]+'</div>'+
+        '<div class="r">'+
+          '<input type="number" data-num="min:'+k+'" value="'+esc(F.statMin[k]||'')+'" placeholder="min" aria-label="'+FACE_DA[i]+' minimum">'+
+          '<input type="number" data-num="max:'+k+'" value="'+esc(F.statMax[k]||'')+'" placeholder="maks" aria-label="'+FACE_DA[i]+' maksimum">'+
+        '</div></div>';
+    }).join('')+'</div>'+
+    '<p class="subline" style="margin-top:12px">For målmænd står de seks felter for DIV, HAN, KIC, REF, SPE og POS.</p>';
+  }
+  else if(name==='Krop & løb'){
+    h+='<div class="posgrid">'+
+      '<div><div class="lbl">Løbestil</div>'+
+        cbList(ACCEL_GROUPS.map(function(g){ return [g[1].join('|'), g[0]]; }), F.accel.length?[F.accel.join('|')]:[], 'accel', 'narrow')+
+      '</div>'+
+      '<div><div class="lbl">Fod</div>'+
+        cbList([['1','Højre'],['2','Venstre']], F.foot?[F.foot]:[], 'foot', 'narrow')+'</div>'+
+      '<div><div class="lbl">Fodbold</div>'+
+        cbList([['0','Herrer'],['1','Kvinder']], F.gender?[F.gender]:[], 'gender', 'narrow')+'</div>'+
+      '</div>'+
+      '<div class="posgrid" style="margin-top:14px">'+
+        '<div><div class="lbl">Højde (cm)</div><div class="range">'+
+          numFld('Min. højde','hMin',F.hMin)+numFld('Maks. højde','hMax',F.hMax)+'</div></div>'+
+        '<div><div class="lbl">Alder (år)</div><div class="range">'+
+          numFld('Min. alder','ageMin',F.ageMin)+numFld('Maks. alder','ageMax',F.ageMax)+'</div></div>'+
+      '</div>'+
+      '<p class="subline" style="margin-top:12px">Løbestil og højde findes for de fleste, men ikke alle kort — '+
+        'kort uden værdi falder ud af filteret.</p>';
+  }
+  return '<div class="fpanel"><div class="fp-head"><h4>'+esc(name)+'</h4>'+
+    '<button class="fp-close" data-a="close">Luk ✕</button></div>'+h+'</div>';
+}
+
+function renderPanel(){
+  document.getElementById('fpanel').innerHTML = openFilter ? panelHTML(openFilter) : '';
+}
+
+function renderTags(){
+  var t=[];
+  function add(label, clear){ t.push([label, clear]); }
+  F.pos.forEach(function(v){ add('Position: '+v, function(){ F.pos.splice(F.pos.indexOf(v),1); }); });
+  F.leagues.forEach(function(v){ add(D.leagues[+v], function(){ F.leagues.splice(F.leagues.indexOf(v),1); }); });
+  F.nations.forEach(function(v){ add(D.nations[v][0], function(){ F.nations.splice(F.nations.indexOf(v),1); }); });
+  F.clubs.forEach(function(v){ add(D.clubs[v][0], function(){ F.clubs.splice(F.clubs.indexOf(v),1); }); });
+  if(F.ratMin!=='') add('Rating ≥ '+F.ratMin, function(){ F.ratMin=''; });
+  if(F.ratMax!=='') add('Rating ≤ '+F.ratMax, function(){ F.ratMax=''; });
+  if(F.onlyNew)     add('Nye i FC 27',        function(){ F.onlyNew=false; });
+  if(F.dMin!=='')   add('Spring ≥ '+F.dMin,   function(){ F.dMin=''; });
+  if(F.dMax!=='')   add('Spring ≤ '+F.dMax,   function(){ F.dMax=''; });
+  if(F.minSk)       add('Tricks ≥ '+F.minSk+'★', function(){ F.minSk=0; });
+  if(F.minWf)       add('Svagt ben ≥ '+F.minWf+'★', function(){ F.minWf=0; });
+  FACE.forEach(function(k,i){
+    if(F.statMin[k]) add(FACE_LABEL[i]+' ≥ '+F.statMin[k], function(){ F.statMin[k]=''; });
+    if(F.statMax[k]) add(FACE_LABEL[i]+' ≤ '+F.statMax[k], function(){ F.statMax[k]=''; });
+  });
+  if(F.accel.length){
+    var nm=ACCEL_GROUPS.filter(function(g){ return g[1].join('|')===F.accel.join('|'); })[0];
+    add('Løbestil: '+(nm?nm[0]:'valgt'), function(){ F.accel=[]; });
+  }
+  if(F.foot)      add('Fod: '+(F.foot==='2'?'Venstre':'Højre'), function(){ F.foot=''; });
+  if(F.gender)    add(F.gender==='1'?'Kvindefodbold':'Herrefodbold', function(){ F.gender=''; });
+  if(F.hMin!=='') add('Højde ≥ '+F.hMin+' cm', function(){ F.hMin=''; });
+  if(F.hMax!=='') add('Højde ≤ '+F.hMax+' cm', function(){ F.hMax=''; });
+  if(F.ageMin!=='')add('Alder ≥ '+F.ageMin,    function(){ F.ageMin=''; });
+  if(F.ageMax!=='')add('Alder ≤ '+F.ageMax,    function(){ F.ageMax=''; });
+
+  renderTags.clears = t.map(function(x){ return x[1]; });
+  document.getElementById('ftags').innerHTML = t.map(function(x,i){
+    return '<button class="tagp" data-tag="'+i+'">'+esc(x[0])+'<i>✕</i></button>';
+  }).join('');
+}
+
+function rowHTML(p){
+  var gk=isGK(p), st=p[STATS], d=delta(p);
+  var cells='';
+  for(var i=0;i<6;i++){
+    var v=st[FACE_IDX[i]], c=statColor(v);
+    cells+='<span class="sbox" style="color:'+c+';border-color:'+c+'55">'+v+'</span>';
+  }
+  var last = d===null
+    ? '<span class="chg e n">Ny</span>'
+    : '<span class="chg e">'+p[PREV]+'<small class="'+(d>0?'up':d<0?'down':'')+'">'+
+      (d>0?'+':'')+d+'</small></span>';
+  return '<a class="tr" href="#/spiller/'+p[ID]+'">'+
+    '<span class="rat md '+tier(p[OVR])+'">'+p[OVR]+'</span>'+
+    '<span class="cell"><span class="nm">'+esc(p[NAME])+'</span>'+
+      '<span class="mt">'+esc(club(p)[0])+' · '+esc(nation(p)[0])+'</span></span>'+
+    '<span class="ps">'+p[POS]+(p[ALT].length?' / '+p[ALT].join(' '):'')+'</span>'+
+    cells+last+'</a>';
+}
+
+/* Tabellen alene — bruges når et inputfelt har fokus og panelet ikke må
+   tegnes om under fingrene på brugeren. */
+function renderRows(){
+  document.getElementById('subline').textContent =
+    nf(filtered.length)+' af '+nf(P.length)+' kort · sorteret efter '+F.sort.toLowerCase()+
+    ' · guld, sølv og bronze · målmænd viser DIV HAN KIC REF SPE POS';
+  var slice=filtered.slice(0,F.limit);
+  document.getElementById('rows').innerHTML = slice.length
+    ? slice.map(rowHTML).join('')
+    : '<p class="empty">Ingen kort matcher dine filtre. Prøv at nulstille.</p>';
+  var more=document.getElementById('more');
+  more.hidden = filtered.length<=F.limit;
+  more.textContent = 'Vis flere spillere ('+nf(filtered.length-F.limit)+' tilbage)';
+}
+
+function renderPlayers(){
+  applyFilters();
+  renderRows();
+  renderChips(); renderPanel(); renderTags();
+  writeHash();
+}
+
+/* ---- Filterhændelser ---- */
+function toggle(arr, v){ var i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); }
+
+document.getElementById('fchips').addEventListener('click',function(e){
+  var b=e.target.closest('.fchip'); if(!b) return;
+  openFilter = openFilter===b.dataset.c ? null : b.dataset.c;
+  renderChips(); renderPanel();
 });
 
-/* ---------- Rendering ---------- */
-var grid=document.getElementById('grid'), shownEl=document.getElementById('shown'),
-    moreEl=document.getElementById('more'), sentinel=document.getElementById('sentinel');
-var filtered=[], cursor=0, BATCH=60;
-
-function cardHTML(p){
-  var st=p[STATS], gk=p[POS]==='GK', lab = gk?FACE_LABEL_GK:FACE_LABEL;
-  var n=nation(p), c=club(p), s='';
-  for(var i=0;i<6;i++){
-    s+='<div><i>'+lab[FACE[i]]+'</i><b>'+st[FACE_IDX[i]]+'</b></div>';
-  }
-  var dv=delta(p), badge='';
-  if(HAS_PREV){
-    if(dv===null) badge='<span class="c-delta new" title="Ny i '+esc(EDITION)+'">NY</span>';
-    else if(dv>0) badge='<span class="c-delta up" title="Op fra '+p[PREV]+'">+'+dv+'</span>';
-    else if(dv<0) badge='<span class="c-delta down" title="Ned fra '+p[PREV]+'">'+dv+'</span>';
-  }
-  return '<button class="card tier-'+tier(p[OVR])+'" data-id="'+p[ID]+'" '+
-    'aria-label="'+esc(p[NAME])+', '+p[OVR]+' samlet, '+p[POS]+'">'+badge+
-    '<span class="c-head"><span class="c-ovr">'+p[OVR]+'</span>'+
-      '<span class="c-pos">'+p[POS]+'</span></span>'+
-    '<img class="c-portrait" src="'+portrait(p[ID])+'" alt="" loading="lazy" '+
-      'onerror="this.onerror=null;this.src=FUT_SILHOUETTE;this.className+=\' ph\'">'+
-    '<div class="c-name">'+esc(p[NAME])+'</div>'+
-    '<div class="c-stats">'+s+'</div>'+
-    '<div class="c-badges">'+
-      (n[1]?'<img src="'+esc(n[1])+'" alt="'+esc(n[0])+'" loading="lazy">':'')+
-      (c[1]?'<img src="'+esc(c[1])+'" alt="'+esc(c[0])+'" loading="lazy">':'')+
-    '</div>'+
-  '</button>';
-}
-
-function renderBatch(){
-  if(cursor>=filtered.length){ moreEl.hidden=true; return; }
-  var end=Math.min(cursor+BATCH, filtered.length), html='';
-  for(var i=cursor;i<end;i++) html+=cardHTML(filtered[i]);
-  grid.insertAdjacentHTML('beforeend', html);
-  cursor=end;
-  moreEl.hidden = cursor>=filtered.length;
-  if(!moreEl.hidden) moreEl.textContent='Ruller videre… '+cursor+' / '+filtered.length;
-}
-
-/* Re-observer efter hver batch: ellers stopper uendelig scroll, hvis sentinel
-   stadig er synlig efter render (intersection-tilstanden ændrer sig ikke). */
-var io=new IntersectionObserver(function(entries){
-  if(!entries[0].isIntersecting) return;
-  io.unobserve(sentinel);
-  renderBatch();
-  if(cursor<filtered.length) io.observe(sentinel);
-},{rootMargin:'900px'});
-function armObserver(){ io.unobserve(sentinel); if(cursor<filtered.length) io.observe(sentinel); }
-
-function renderActive(){
-  var tags=[], t=document.getElementById('activeTags');
-  function add(label,clear){ tags.push({l:label,c:clear}); }
-  if(F.q) add('Søgning: "'+qEl.value.trim()+'"',function(){ qEl.value=''; F.q=''; });
-  if(F.ovrMin>40||F.ovrMax<99) add('Rating '+F.ovrMin+'–'+F.ovrMax,function(){
-    ovrMin.value=40;ovrMax.value=99;ovrChanged();
-  });
-  if(F.pos.length) add('Position: '+F.pos.join(', '),function(){
-    F.pos=[]; [].forEach.call(posChips.children,function(c){c.setAttribute('aria-pressed','false');});
-  });
-  if(F.type!=='') add('Kategori: '+['Målmand','Forsvar','Midtbane','Angreb'][+F.type],function(){
-    F.type=''; [].forEach.call(document.getElementById('typeSeg').children,function(c){
-      c.setAttribute('aria-pressed', c.dataset.v===''?'true':'false'); });
-  });
-  if(F.gender!=='') add(F.gender==='0'?'Herrefodbold':'Kvindefodbold',function(){
-    F.gender=''; [].forEach.call(document.getElementById('genderSeg').children,function(c){
-      c.setAttribute('aria-pressed', c.dataset.v===''?'true':'false'); });
-  });
-  if(F.league!=='') add('Liga: '+D.leagues[+F.league],function(){ F.league=''; leagueSel.value=''; });
-  if(F.club) add('Klub: '+document.getElementById('club').value,function(){
-    F.club=''; document.getElementById('club').value=''; });
-  if(F.nation) add('Nation: '+document.getElementById('nation').value,function(){
-    F.nation=''; document.getElementById('nation').value=''; });
-  if(F.foot!=='') add('Fod: '+(F.foot==='1'?'højre':'venstre'),function(){
-    F.foot=''; [].forEach.call(document.getElementById('footSeg').children,function(c){
-      c.setAttribute('aria-pressed', c.dataset.v===''?'true':'false'); });
-  });
-  if(F.skills>1) add('Tricks '+F.skills+'★+',function(){
-    F.skills=1; document.getElementById('skills').value=1; document.getElementById('skillsV').textContent='1'; });
-  if(F.weak>1) add('Svag fod '+F.weak+'★+',function(){
-    F.weak=1; document.getElementById('weak').value=1; document.getElementById('weakV').textContent='1'; });
-  if(F.ageMax<45) add('Højst '+F.ageMax+' år',function(){
-    F.ageMax=45; document.getElementById('ageMax').value=45; document.getElementById('ageMaxV').textContent='Alle'; });
-  if(F.accel.length){
-    var lbls=ACCEL_GROUPS.filter(function(g){return F.accel.indexOf(g[1].join(','))>=0;})
-                         .map(function(g){return g[0];});
-    add('Acceleration: '+lbls.join(', '),function(){
-      F.accel=[];
-      [].forEach.call(accelChips.children,function(c){c.setAttribute('aria-pressed','false');});
+document.getElementById('fpanel').addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]'); if(!b) return;
+  var a=b.dataset.a, v=b.dataset.v;
+  if(a==='close'){ openFilter=null; renderChips(); renderPanel(); return; }
+  if(a==='posmode') F.posMode=v;
+  else if(a==='pos') toggle(F.pos, v);
+  else if(a==='posset'){
+    var set=POS_SHORTCUTS[+v][1];
+    var all=set.every(function(x){ return F.pos.indexOf(x)>=0; });
+    set.forEach(function(x){
+      var i=F.pos.indexOf(x);
+      if(all){ if(i>=0) F.pos.splice(i,1); } else if(i<0) F.pos.push(x);
     });
   }
-  if(F.change) add({up:'Steget',down:'Faldet',new:'Ny i '+EDITION}[F.change],function(){
-    F.change=''; [].forEach.call(document.getElementById('changeSeg').children,function(c){
-      c.setAttribute('aria-pressed', c.dataset.v===''?'true':'false'); });
-  });
-  if(F.hMin>150) add('Højde ≥ '+F.hMin+' cm',function(){
-    F.hMin=150; document.getElementById('hMin').value=150;
-    document.getElementById('hMinV').textContent='Alle';
-  });
-  Object.keys(F.stats).forEach(function(k){
-    add(FACE_LABEL[k]+' ≥ '+F.stats[k],function(){
-      delete F.stats[k];
-      var i=statFilters.querySelector('[data-stat="'+k+'"]');
-      i.value=0; i.parentNode.querySelector('.v').textContent='0';
-    });
-  });
-  F.ps.slice().forEach(function(i){
-    add('PS: '+D.playstyles[i][0],function(){
-      var k=F.ps.indexOf(i); if(k>=0) F.ps.splice(k,1);
-      var box=psList.querySelector('input[value="'+i+'"]'); if(box) box.checked=false;
-    });
-  });
-
-  t.innerHTML='';
-  tags.forEach(function(tag,i){
-    var el=document.createElement('span'); el.className='tag';
-    el.innerHTML='<span></span><button type="button" aria-label="Fjern filter">×</button>';
-    el.firstChild.textContent=tag.l;
-    el.querySelector('button').addEventListener('click',function(){ tag.c(); update(); });
-    t.appendChild(el);
-  });
-  if(tags.length>1){
-    var all=document.createElement('button');
-    all.className='tag'; all.style.cursor='pointer'; all.textContent='Ryd alle';
-    all.addEventListener('click',function(){ location.hash=''; location.reload(); });
-    t.appendChild(all);
+  else if(a==='league') toggle(F.leagues, v);
+  else if(a==='nation') toggle(F.nations, v);
+  else if(a==='club')   toggle(F.clubs, v);
+  else if(a==='accel')  F.accel = F.accel.join('|')===v ? [] : v.split('|');
+  else if(a==='foot')   F.foot   = F.foot===v ? '' : v;
+  else if(a==='gender') F.gender = F.gender===v ? '' : v;
+  else if(a==='starsk') F.minSk = F.minSk===+v ? 0 : +v;
+  else if(a==='starwf') F.minWf = F.minWf===+v ? 0 : +v;
+  else if(a==='dquick'){
+    if(v==='ny'){ F.onlyNew=!F.onlyNew; F.dMin=''; F.dMax=''; }
+    else { F.onlyNew=false; var q=v.split(':');
+      var same=F.dMin===q[0] && F.dMax===q[1];
+      F.dMin=same?'':q[0]; F.dMax=same?'':q[1]; }
   }
-}
+  else if(a==='rquick'){ var r=v.split(':');
+    var s2=F.ratMin===r[0] && F.ratMax===r[1];
+    F.ratMin=s2?'':r[0]; F.ratMax=s2?'':r[1]; }
+  F.limit=15; renderPlayers();
+});
 
-var rafPending=false;
-function update(){
-  if(rafPending) return;
-  rafPending=true;
-  requestAnimationFrame(function(){
-    rafPending=false;
-    filtered=P.filter(matches);
-    filtered.sort(SORTS[F.sort]||SORTS.ovr);
-    cursor=0;
-    grid.innerHTML='';
-    moreEl.textContent='';
-    moreEl.hidden=true;
-    shownEl.textContent=filtered.length.toLocaleString('da-DK');
-    grid.hidden=false;
-    document.getElementById('loading').hidden=true;
-
-    if(!filtered.length){
-      moreEl.hidden=false;
-      moreEl.innerHTML='<div class="empty"><h2>Ingen kort matcher</h2>'+
-        '<p>Prøv at løsne et filter — eller tryk “Nulstil alle filtre”.</p></div>';
-    }else{
-      renderBatch();
-      renderBatch();
-    }
-    armObserver();
-    renderActive();
-    syncHash();
-  });
-}
-
-/* ---------- Detaljevisning ---------- */
-var dlg=document.getElementById('detail');
-var byId={}; P.forEach(function(p){ byId[p[ID]]=p; });
-
-function statLine(k,v,color){
-  var w=Math.max(2,Math.min(99,v))/99*100;
-  return '<div class="sline"><span>'+esc(STAT_DA[k]||k)+'</span><span class="n">'+v+'</span>'+
-    '<span class="bar"><i style="width:'+w.toFixed(1)+'%;background:'+color+'"></i></span></div>';
-}
-
-function openDetail(id){
-  var p=byId[id]; if(!p) return;
-  var st=p[STATS], gk=p[POS]==='GK', lab=gk?FACE_LABEL_GK:FACE_LABEL;
-  var n=nation(p), c=club(p), a=age(p);
-
-  /* EA udfylder ikke alle felter i hvert ratings-drop (højde og vægt er fx
-     tomme i hele FC 27-droppet). Udelad dem frem for at vise tomme streger. */
-  var facts=[
-    ['Position', p[POS]+(p[ALT].length?' ('+p[ALT].join(', ')+')':'')],
-    ['Alder', a!=null ? a+' år' : null],
-    ['Fod', p[FOOT]===1?'Højre':(p[FOOT]===2?'Venstre':null)],
-    ['Tricks', p[SKILLS] ? '★'.repeat(p[SKILLS]) : null],
-    ['Svag fod', p[WEAK] ? '★'.repeat(p[WEAK]) : null],
-    ['Højde', p[HEIGHT] ? p[HEIGHT]+' cm' : null],
-    ['Vægt', p[WEIGHT] ? p[WEIGHT]+' kg' : null],
-    ['Acceleration', p[ACCEL] ? ACCEL_DA[p[ACCEL]] : null],
-    ['EA-ID', p[ID]]
-  ].filter(function(f){ return f[1] !== null && f[1] !== ''; })
-   .map(function(f){ return '<span class="fact">'+f[0]+' <b>'+esc(f[1])+'</b></span>'; }).join('');
-
-  var face='';
-  for(var i=0;i<6;i++){
-    face+='<span class="fact" title="'+esc(FACE_FULL[FACE[i]])+'">'+lab[FACE[i]]+
-      ' <b>'+st[FACE_IDX[i]]+'</b></span>';
+document.getElementById('fpanel').addEventListener('input',function(e){
+  var el=e.target;
+  if(el.dataset.q!==undefined){
+    if(el.dataset.q==='lgq') lgQ=el.value;
+    else if(el.dataset.q==='natq') natQ=el.value;
+    else clubQ=el.value;
+    var pos=el.selectionStart, box=document.getElementById('fpanel');
+    renderPanel();
+    var again=box.querySelector('[data-q="'+el.dataset.q+'"]');
+    if(again){ again.focus(); again.setSelectionRange(pos,pos); }
+    return;
   }
+  if(el.dataset.num!==undefined){
+    var n=el.dataset.num, v=el.value;
+    if(n.indexOf('min:')===0) F.statMin[n.slice(4)]=v;
+    else if(n.indexOf('max:')===0) F.statMax[n.slice(4)]=v;
+    else F[n]=v;
+    if(n==='dMin'||n==='dMax') F.onlyNew=false;
+    F.limit=15;
+    applyFilters(); renderRows(); renderChips(); renderTags(); writeHash();
+  }
+});
 
-  var groups='';
-  STAT_GROUPS.forEach(function(g){
-    if(g[0]==='Målmand' && !gk) return;
-    var lines=g[1].map(function(k){ return statLine(k, st[SI[k]], g[2]); }).join('');
-    groups+='<div class="sgroup"><h3>'+g[0]+'</h3>'+lines+'</div>';
-  });
+document.getElementById('ftags').addEventListener('click',function(e){
+  var b=e.target.closest('[data-tag]'); if(!b) return;
+  renderTags.clears[+b.dataset.tag]();
+  F.limit=15; renderPlayers();
+});
 
-  var styles='';
-  p[PSP].forEach(function(i){ styles+=psHTML(i,true); });
-  p[PS].forEach(function(i){ styles+=psHTML(i,false); });
-  if(!styles) styles='<p style="color:var(--muted);font-size:13px">Ingen PlayStyles.</p>';
-  /* Uden PlayStyles i datasættet ville højre spalte være tom — så vis
-     attributterne i fuld bredde i stedet. */
-  var right = HAS_PS ? '<div><h3>PlayStyles</h3>'+styles+'</div>' : '';
+var fq=document.getElementById('fq'), fqT;
+fq.addEventListener('input',function(){
+  clearTimeout(fqT);
+  fqT=setTimeout(function(){ F.q=norm(fq.value.trim()); F.limit=15; renderPlayers(); },140);
+});
 
-  dlg.innerHTML=
-    '<button class="d-close" aria-label="Luk">×</button>'+
-    '<div class="d-head">'+
-      /* Vores eget kort frem for EA's shield-billede: shield-assets ligger stadig
-         under FC25-stien og viser af og til en forældet rating/position. */
-      '<div class="d-card">'+cardHTML(p)+'</div>'+
-      '<div class="d-id">'+
-        '<h2>'+esc(p[NAME])+'</h2>'+
-        '<div class="d-sub">'+
-          (n[1]?'<img src="'+esc(n[1])+'" alt="">':'')+esc(n[0])+
-          ' &middot; '+esc(c[0])+' &middot; '+esc(league(p))+
-          ' &middot; '+(p[GENDER]===1?'Kvindefodbold':'Herrefodbold')+
-        '</div>'+
-        changeLine(p)+
-        '<div class="d-facts" style="margin-bottom:8px">'+face+'</div>'+
-        '<div class="d-facts">'+facts+'</div>'+
-        '<button class="btn" id="addCmp" style="margin-top:12px">Tilføj til sammenligning</button>'+
-      '</div>'+
-    '</div>'+
-    '<div class="d-body'+(HAS_PS?'':' one-col')+'">'+
-      '<div>'+groups+'</div>'+
-      '<div>'+right+simHTML(p)+'</div>'+
-    '</div>';
+var sortSel=document.getElementById('sortSel');
+Object.keys(SORTS).forEach(function(k){
+  var o=document.createElement('option'); o.value=k; o.textContent='Sortér: '+k; sortSel.appendChild(o);
+});
+sortSel.addEventListener('change',function(){ F.sort=sortSel.value; F.limit=15; renderPlayers(); });
 
-  dlg.querySelector('.d-close').addEventListener('click',function(){ dlg.close(); });
-  var ac=dlg.querySelector('#addCmp');
-  if(ac) ac.addEventListener('click',function(){
-    addToCompare(p[ID]);
-    ac.textContent='Tilføjet ✓';
-    setTimeout(function(){ ac.textContent='Tilføj til sammenligning'; },1200);
-  });
-  dlg.querySelectorAll('[data-open]').forEach(function(b){
-    b.addEventListener('click',function(){ openDetail(+b.dataset.open); });
-  });
-  dlg.showModal();
-}
+document.getElementById('more').addEventListener('click',function(){
+  F.limit+=15; renderRows(); writeHash();
+});
 
-function changeLine(p){
-  if(!HAS_PREV) return '';
-  var dv=delta(p);
-  if(dv===null) return '<div class="d-sub" style="margin-bottom:10px">'+
-    '<span class="delta">Ny i '+esc(EDITION)+'</span> — fandtes ikke i '+esc(PREV_EDITION)+'</div>';
-  if(dv===0) return '<div class="d-sub" style="margin-bottom:10px">Uændret '+p[OVR]+
-    ' siden '+esc(PREV_EDITION)+'</div>';
-  return '<div class="d-sub" style="margin-bottom:10px">'+esc(PREV_EDITION)+' '+p[PREV]+
-    ' → '+esc(EDITION)+' '+p[OVR]+' <span class="delta '+(dv>0?'up':'down')+'">'+
-    (dv>0?'+':'')+dv+'</span></div>';
-}
+document.getElementById('resetAll').addEventListener('click',function(){
+  F.q=''; F.posMode='Alle'; F.pos=[]; F.leagues=[]; F.nations=[]; F.clubs=[];
+  F.ratMin=''; F.ratMax=''; F.dMin=''; F.dMax=''; F.onlyNew=false;
+  F.minSk=0; F.minWf=0; F.statMin={}; F.statMax={};
+  F.accel=[]; F.foot=''; F.gender=''; F.hMin=''; F.hMax=''; F.ageMin=''; F.ageMax='';
+  F.sort='Rating'; F.limit=15;
+  openFilter=null; lgQ=natQ=clubQ='';
+  fq.value=''; sortSel.value='Rating';
+  renderPlayers();
+});
 
-/* Lignende spillere: nærmeste nabo på de seks hovedattributter inden for samme
-   position. Vægter rating med, så en 60'er ikke foreslås til en 90'er. */
-function similar(p,n){
-  var st=p[STATS], out=[];
+/* ==========================================================================
+   Spillerside
+   ========================================================================== */
+var pTab='Egenskaber';
+var P_TABS=['Egenskaber','Udvikling','Kemistile','Profil'];
+
+function rankIn(p, pred){
+  var n=0, better=0;
   for(var i=0;i<P.length;i++){
-    var q=P[i];
-    if(q[ID]===p[ID] || q[POS]!==p[POS]) continue;
-    var d=0, qs=q[STATS];
-    for(var j=0;j<6;j++){ var x=st[FACE_IDX[j]]-qs[FACE_IDX[j]]; d+=x*x; }
-    d += Math.pow((p[OVR]-q[OVR])*2, 2);
-    out.push([d,q]);
+    if(!pred(P[i])) continue;
+    n++;
+    if(P[i][OVR]>p[OVR] || (P[i][OVR]===p[OVR] && P[i][RANK]<p[RANK])) better++;
   }
-  out.sort(function(a,b){ return a[0]-b[0]; });
-  return out.slice(0,n).map(function(r){ return r[1]; });
+  return [better+1, n];
 }
 
-function simHTML(p){
-  var list=similar(p,5);
-  if(!list.length) return '';
-  return '<h3 style="margin-top:18px">Lignende spillere</h3><div class="simlist">'+
-    list.map(function(q){
-      var dv=delta(q);
-      return '<button class="simrow" data-open="'+q[ID]+'">'+
-        '<img src="'+portrait(q[ID])+'" alt="" loading="lazy" '+
-          'onerror="this.onerror=null;this.src=FUT_SILHOUETTE;this.style.opacity=.3">'+
-        '<span class="nm">'+esc(q[NAME])+'</span>'+
-        '<span class="ps">'+q[POS]+'</span>'+
-        '<span class="ov">'+q[OVR]+'</span>'+
-        (HAS_PREV&&dv?'<span class="delta '+(dv>0?'up':'down')+'" style="font-size:11px">'+
-          (dv>0?'+':'')+dv+'</span>':'')+
-      '</button>';
+function groupHTML(p, g){
+  var st=p[STATS];
+  var total = g[1]===null
+    ? Math.round(g[2].reduce(function(a,r){ return a+st[SI[r[1]]]; },0)/g[2].length)
+    : st[FACE_IDX[g[1]]];
+  return '<div class="grp"><div class="gh"><h4>'+esc(g[0])+'</h4>'+
+    '<b style="color:'+statColor(total)+'">'+total+'</b></div>'+
+    g[2].map(function(r){
+      var v=st[SI[r[1]]];
+      return '<div class="srow"><div class="l"><span>'+esc(r[0])+'</span><b>'+v+'</b></div>'+
+        '<div class="bar"><i style="width:'+v+'%;background:'+statColor(v)+'"></i></div></div>';
     }).join('')+'</div>';
 }
 
-function psHTML(i,plus){
-  var ps=D.playstyles[i]; if(!ps) return '';
-  /* EA sætter selv "+" på navnet for PlayStyle+ — undgå at skrive det to gange. */
-  var name=ps[0];
-  if(plus && name.slice(-1)!=='+') name+='+';
-  return '<div class="pstyle'+(plus?' plus':'')+'">'+
-    (ps[1]?'<img src="'+esc(ps[1])+'" alt="" loading="lazy">':'')+
-    '<div><b>'+esc(name)+'</b><span>'+esc(ps[2])+'</span></div></div>';
+function chemRec(p){
+  var st=p[STATS], vals=FACE_IDX.map(function(i){ return st[i]; });
+  var scored=CHEM_STYLES.map(function(c){
+    var s=c[1].reduce(function(a,i){ return a+vals[i]; },0)/c[1].length;
+    return [c[0], s];
+  }).sort(function(a,b){ return b[1]-a[1]; });
+  return scored.slice(0,3).map(function(x){ return x[0]; });
 }
 
-grid.addEventListener('click',function(e){
-  var card=e.target.closest('.card'); if(card) openDetail(+card.dataset.id);
-});
-dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
-
-/* ---------- Sammenligning ---------- */
-var CMP_MAX = 4;
-var cmp = [];
-var tray=document.getElementById('tray'), trayItems=document.getElementById('trayItems');
-
-function renderTray(){
-  tray.hidden = cmp.length===0;
-  trayItems.innerHTML='';
-  cmp.forEach(function(id){
-    var p=byId[id]; if(!p) return;
-    var el=document.createElement('span');
-    el.className='tray-chip';
-    el.innerHTML='<span></span><b>'+p[OVR]+'</b><button type="button" aria-label="Fjern">×</button>';
-    el.firstChild.textContent=p[NAME];
-    el.querySelector('button').addEventListener('click',function(){
-      cmp=cmp.filter(function(x){return x!==id;}); renderTray();
-    });
-    trayItems.appendChild(el);
+/* Lignende kort: samme position og tæt på samme rating. Herre- og
+   kvindefodbold blandes ikke, med mindre der ikke er nok kandidater. */
+function similar(p, n){
+  var out=P.filter(function(q){
+    return q[ID]!==p[ID] && q[POS]===p[POS] && Math.abs(q[OVR]-p[OVR])<=3;
   });
+  out.sort(function(a,b){
+    function s(q){
+      return Math.abs(q[OVR]-p[OVR])*10
+        + (q[GENDER]===p[GENDER]?0:20)
+        - (q[LEAGUE]===p[LEAGUE]?3:0) - (q[NAT]===p[NAT]?2:0);
+    }
+    return s(a)-s(b);
+  });
+  return out.slice(0,n);
 }
-function addToCompare(id){
-  if(cmp.indexOf(id)>=0) return;
-  if(cmp.length>=CMP_MAX) cmp.shift();   /* ældste ryger ud frem for at afvise */
-  cmp.push(id);
-  renderTray();
-}
-document.getElementById('cmpClear').addEventListener('click',function(){ cmp=[]; renderTray(); });
-document.getElementById('cmpOpen').addEventListener('click',openCompare);
 
-var cmpDlg=document.getElementById('cmpDlg');
-function openCompare(){
-  var ps=cmp.map(function(id){return byId[id];}).filter(Boolean);
-  if(ps.length<2){ alert('Vælg mindst to spillere.'); return; }
+function renderPlayer(id){
+  var p=byId[id];
+  var box=document.getElementById('detail');
+  if(!p){ box.innerHTML='<p class="empty">Kortet findes ikke i datasættet.</p>'; return; }
 
-  function row(label, vals, higherIsBetter){
-    var nums=vals.filter(function(v){return typeof v==='number';});
-    var best = higherIsBetter===false ? Math.min.apply(null,nums) : Math.max.apply(null,nums);
-    return '<tr><td>'+esc(label)+'</td>'+vals.map(function(v){
-      var isBest = nums.length>1 && v===best && typeof v==='number';
-      return '<td class="'+(isBest?'best':'')+'">'+(v==null||v===''?'—':esc(v))+'</td>';
-    }).join('')+'</tr>';
+  var gk=isGK(p), d=delta(p), a=age(p);
+  var groups = gk ? GROUPS_GK : GROUPS_OUT;
+  var st=p[STATS];
+  var base=FACE_IDX.reduce(function(x,i){ return x+st[i]; },0);
+  var sumKeys = SUM_KEYS.concat(gk?['gkDiving','gkHandling','gkKicking','gkPositioning','gkReflexes']:[]);
+  var total=sumKeys.reduce(function(x,k){ return x+st[SI[k]]; },0);
+
+  var chips=[
+    ['Position', p[POS]+(p[ALT].length?' / '+p[ALT].join(' '):'')],
+    ['Klub', club(p)[0]], ['Nation', nation(p)[0]], ['Liga', league(p)],
+    ['Tricks', p[SKILLS]+'★'], ['Svagt ben', p[WEAK]+'★'],
+    ['Fod', p[FOOT]===2?'Venstre':'Højre']
+  ];
+  if(p[HEIGHT]) chips.push(['Højde', p[HEIGHT]+' cm']);
+  if(p[WEIGHT]) chips.push(['Vægt', p[WEIGHT]+' kg']);
+  if(a!=null)   chips.push(['Alder', a+' år']);
+
+  var badges=[];
+  badges.push(tier(p[OVR])==='g'?'Guld':tier(p[OVR])==='s'?'Sølv':'Bronze');
+  if(p[ACCEL]) badges.push(ACCEL_DA[p[ACCEL]]);
+  if(p[GENDER]===1) badges.push('Kvindefodbold');
+  if(d===null) badges.push('Ny i FC 27');
+  else if(d>0) badges.push('+'+d+' siden FC 26');
+
+  var body='';
+  if(pTab==='Egenskaber'){
+    body='<h2 class="h2">Detaljerede egenskaber</h2><div class="grps">'+
+      groups.map(function(g){ return groupHTML(p,g); }).join('')+'</div>'+
+      '<div class="sums">'+
+        '<div class="sum"><div class="l"><span>Basisstats</span><b>'+base+' / 600</b></div>'+
+          '<div class="bar" style="margin-top:8px"><i style="width:'+(base/600*100)+'%;background:#9BD94F"></i></div></div>'+
+        '<div class="sum"><div class="l"><span>Samlede egenskaber</span><b>'+total+' / '+(sumKeys.length*100)+'</b></div>'+
+          '<div class="bar" style="margin-top:8px"><i style="width:'+(total/(sumKeys.length*100)*100)+'%;background:#3DDC84"></i></div></div>'+
+      '</div>';
   }
-  function grp(t){ return '<tr class="grp"><td colspan="'+(ps.length+1)+'">'+esc(t)+'</td></tr>'; }
+  else if(pTab==='Udvikling'){
+    var r1=rankIn(p, function(){ return true; });
+    var r2=rankIn(p, function(q){ return q[POS]===p[POS]; });
+    var r3=rankIn(p, function(q){ return q[LEAGUE]===p[LEAGUE]; });
+    var r4=rankIn(p, function(q){ return q[NAT]===p[NAT]; });
+    body='<h2 class="h2">Fra FC 26 til FC 27</h2>'+
+      (d===null
+        ? '<p class="prose">'+esc(p[NAME])+' står ikke i FC 26-databasen. Kortet er nyt i FC 27.</p>'
+        : '<p class="prose">'+esc(p[NAME])+' gik fra <b>'+p[PREV]+'</b> i FC 26 til <b>'+p[OVR]+
+          '</b> i FC 27 — '+(d===0?'uændret':(d>0?'en fremgang på '+d:'et fald på '+(-d)))+'.</p>')+
+      '<div class="tiles">'+
+        '<div class="tile"><div class="k">FC 26</div><div class="v">'+(p[PREV]==null?'—':p[PREV])+'</div></div>'+
+        '<div class="tile"><div class="k">FC 27</div><div class="v">'+p[OVR]+'</div></div>'+
+        '<div class="tile"><div class="k">Ændring</div><div class="v '+(d>0?'up':d<0?'down':'')+'">'+
+          (d===null?'Ny':(d>0?'+':'')+d)+'</div></div>'+
+      '</div>'+
+      '<h2 class="h2">Placering i FC 27</h2><div class="facts">'+
+        '<div><div class="k">Samlet</div><div class="v">Nr. '+nf(r1[0])+' af '+nf(r1[1])+'</div></div>'+
+        '<div><div class="k">Blandt '+esc(p[POS])+'</div><div class="v">Nr. '+nf(r2[0])+' af '+nf(r2[1])+'</div></div>'+
+        '<div><div class="k">I '+esc(league(p))+'</div><div class="v">Nr. '+nf(r3[0])+' af '+nf(r3[1])+'</div></div>'+
+        '<div><div class="k">Fra '+esc(nation(p)[0])+'</div><div class="v">Nr. '+nf(r4[0])+' af '+nf(r4[1])+'</div></div>'+
+      '</div>';
+  }
+  else if(pTab==='Kemistile'){
+    var rec=chemRec(p);
+    body='<h2 class="h2">Kemistile</h2>'+
+      '<p class="prose">De markerede stile løfter de egenskaber, kortet allerede er stærkest i. '+
+      'Beregnet ud fra kortets egne seks ansigtsstats — ikke fra spilledata.</p>'+
+      '<div class="chem-grid">'+CHEM_STYLES.map(function(c){
+        var on=rec.indexOf(c[0])>=0;
+        return '<div class="chem'+(on?' rec':'')+'"><b>'+esc(c[0])+'</b>'+
+          '<span>'+c[1].map(function(i){ return (gk?FACE_LABEL_GK:FACE_LABEL)[i]; }).join(' · ')+'</span></div>';
+      }).join('')+'</div>';
+  }
+  else {
+    var accel = p[ACCEL] ? ACCEL_DA[p[ACCEL]] : null;
+    var sent = esc(p[NAME])+' er '+(a!=null?a+'-årig ':'')+
+      (gk?'målmand':'spiller på pladsen '+p[POS])+' i '+esc(club(p)[0])+
+      ' ('+esc(league(p))+') og spiller for '+esc(nation(p)[0])+'. '+
+      'Kortet har '+p[SKILLS]+' stjerner i tricks og '+p[WEAK]+' i svagt ben, og '+
+      (p[FOOT]===2?'venstre':'højre')+' fod er det stærke.';
+    var sent2 = (p[HEIGHT]?'Højde '+p[HEIGHT]+' cm':'Højde ukendt')+
+      (p[WEIGHT]?', vægt '+p[WEIGHT]+' kg':'')+
+      (accel?'. Løbestilen er '+accel.toLowerCase()+'.':'.')+
+      ' EA lister kortet som nr. '+nf(p[RANK])+' i FC 27-ratings.';
+    body='<h2 class="h2">Om kortet</h2><p class="prose">'+sent+'</p><p class="prose">'+sent2+'</p>'+
+      '<div class="facts">'+
+        '<div><div class="k">Fulde navn</div><div class="v">'+esc(p[NAME])+'</div></div>'+
+        '<div><div class="k">Født</div><div class="v">'+(p[BORN]?esc(p[BORN]):'—')+'</div></div>'+
+        '<div><div class="k">Løbestil</div><div class="v">'+(accel?esc(accel):'—')+'</div></div>'+
+        '<div><div class="k">Kortniveau</div><div class="v">'+badges[0]+'</div></div>'+
+        '<div><div class="k">EA-plads</div><div class="v">'+nf(p[RANK])+'</div></div>'+
+        '<div><div class="k">Spiller-id</div><div class="v">'+p[ID]+'</div></div>'+
+      '</div>';
+  }
 
-  var gkAll = ps.every(function(p){ return p[POS]==='GK'; });
-  var faceLab = gkAll ? FACE_LABEL_GK : FACE_LABEL;
-
-  var html='<button class="d-close" aria-label="Luk">×</button>'+
-    '<div style="padding:22px;overflow:auto">'+
-    '<h2 style="margin:0 0 16px;font-size:20px">Sammenligning</h2>'+
-    '<div style="overflow-x:auto"><table class="cmp"><thead><tr><th></th>'+
-      ps.map(function(p){
-        return '<th><img src="'+portrait(p[ID])+'" alt="" '+
-          'onerror="this.onerror=null;this.src=FUT_SILHOUETTE;this.style.opacity=.3">'+
-          esc(p[NAME])+'<br><span style="color:var(--muted);font-weight:500">'+p[POS]+'</span></th>';
-      }).join('')+'</tr></thead><tbody>';
-
-  html+=row('Samlet', ps.map(function(p){return p[OVR];}));
-  if(HAS_PREV) html+=row(PREV_EDITION, ps.map(function(p){return p[PREV]==null?'ny':p[PREV];}));
-  html+=grp('Hovedattributter');
-  FACE.forEach(function(k,i){
-    html+=row(faceLab[k]+' · '+FACE_FULL[k], ps.map(function(p){return p[STATS][FACE_IDX[i]];}));
-  });
-  STAT_GROUPS.forEach(function(g){
-    if(g[0]==='Målmand' && !gkAll) return;
-    html+=grp(g[0]);
-    g[1].forEach(function(k){
-      html+=row(STAT_DA[k]||k, ps.map(function(p){return p[STATS][SI[k]];}));
-    });
-  });
-  html+=grp('Profil');
-  html+=row('Tricks', ps.map(function(p){return p[SKILLS];}));
-  html+=row('Svag fod', ps.map(function(p){return p[WEAK];}));
-  html+=row('Alder', ps.map(function(p){return age(p);}), false);
-  if(HAS_HEIGHT) html+=row('Højde (cm)', ps.map(function(p){return p[HEIGHT]||null;}));
-  if(HAS_ACCEL) html+=row('Acceleration', ps.map(function(p){return p[ACCEL]?ACCEL_DA[p[ACCEL]]:null;}));
-  html+=row('Klub', ps.map(function(p){return club(p)[0];}));
-  html+=row('Nation', ps.map(function(p){return nation(p)[0];}));
-
-  cmpDlg.innerHTML=html+'</tbody></table></div></div>';
-  cmpDlg.querySelector('.d-close').addEventListener('click',function(){ cmpDlg.close(); });
-  cmpDlg.showModal();
+  box.innerHTML =
+    '<div class="det">'+
+      '<div class="det-l">'+
+        cardHTML(p)+
+        '<div class="mbox">'+
+          '<div class="lbl">Udvikling · FC 26 → FC 27</div>'+
+          '<div class="top"><span class="big">'+p[OVR]+'</span>'+
+            (d===null ? '<span class="n">ny i FC 27</span>'
+                      : '<span class="'+(d>0?'up':d<0?'down':'n')+'" style="font-weight:800">'+
+                        (d===0 ? 'uændret siden FC 26' : (d>0?'+':'')+d+' siden FC 26')+'</span>')+'</div>'+
+          '<div class="tiles">'+
+            '<div class="tile"><div class="k">FC 26</div><div class="v">'+(p[PREV]==null?'—':p[PREV])+'</div></div>'+
+            '<div class="tile"><div class="k">FC 27</div><div class="v">'+p[OVR]+'</div></div>'+
+          '</div>'+
+          '<p class="subline" style="margin-top:12px">Markedspriser findes ikke i EA\'s ratings-API '+
+            'og er ikke offentligt tilgængelige. Se “Om data”.</p>'+
+        '</div>'+
+      '</div>'+
+      '<div class="det-r">'+
+        '<h1>'+esc(p[NAME])+'</h1>'+
+        '<div class="mchips">'+chips.map(function(c){
+          return '<span class="mchip"><span>'+esc(c[0])+'</span>'+esc(c[1])+'</span>'; }).join('')+'</div>'+
+        '<div class="badges">'+badges.map(function(b){ return '<span class="badge">'+esc(b)+'</span>'; }).join('')+'</div>'+
+        '<div class="tabs">'+P_TABS.map(function(t){
+          return '<button class="pill'+(t===pTab?' on':'')+'" data-ptab="'+t+'">'+t+'</button>'; }).join('')+'</div>'+
+        body+
+      '</div>'+
+    '</div>'+
+    '<h2 class="h2">Lignende kort</h2>'+
+    '<div class="simgrid">'+similar(p,4).map(function(q){ return cardHTML(q); }).join('')+'</div>';
 }
-cmpDlg.addEventListener('click',function(e){ if(e.target===cmpDlg) cmpDlg.close(); });
 
-/* ================= HOLDBYGGER =================
-   Chemistry-reglerne for FC 26/27 (kilde: fifauteam.com/fc-26-chemistry):
-     klub   2/4/7 spillere -> 1/2/3 point
-     liga   3/5/8          -> 1/2/3
-     nation 2/5/8          -> 1/2/3
-   Pointene lægges sammen og loftes ved 3 pr. spiller, altså 33 for et helt hold.
-   Afgørende: en spiller ude af position får 0 OG tælles ikke med i
-   holdkammeraternes forbindelser. Derfor beregnes tællingerne kun over de
-   spillere der står rigtigt.
-   Ikoner og helte findes ikke i EA's ratings-database, så deres særregler
-   (dobbelttælling) er ikke relevante her. Manager-bonus er heller ikke med. */
+document.getElementById('detail').addEventListener('click',function(e){
+  var b=e.target.closest('[data-ptab]'); if(!b) return;
+  pTab=b.dataset.ptab;
+  renderPlayer(currentId);
+});
 
-var CHEM_T = { club:[2,4,7], league:[3,5,8], nation:[2,5,8] };
-
-/* Formationer bruger kun de 12 positioner EA's ratingsdata indeholder.
-   Tal er procent af banens bredde/højde. */
-var FORMATIONS = {
+/* ==========================================================================
+   Squad builder — chemistry efter FC 26/27-reglerne
+   --------------------------------------------------------------------------
+   klub   2/4/7 spillere -> 1/2/3 point
+   liga   3/5/8          -> 1/2/3
+   nation 2/5/8          -> 1/2/3
+   Pointene lægges sammen og loftes ved 3 pr. spiller, altså 33 for et helt
+   hold. Afgørende: en spiller ude af position får 0 OG tælles ikke med i
+   holdkammeraternes forbindelser. Ikoner og helte findes ikke i EA's
+   ratingsdata, så deres særregler er ikke relevante her.
+   ========================================================================== */
+var CHEM_T={club:[2,4,7], league:[3,5,8], nation:[2,5,8]};
+var FORMATIONS={
   '4-4-2':     [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
                 ['LM',12,46],['CM',37,50],['CM',63,50],['RM',88,46],['ST',37,15],['ST',63,15]],
   '4-3-3':     [['GK',50,92],['LB',12,72],['CB',37,76],['CB',63,76],['RB',88,72],
@@ -1460,158 +1408,119 @@ var FORMATIONS = {
   '5-3-2':     [['GK',50,92],['LB',8,64],['CB',28,79],['CB',50,82],['CB',72,79],['RB',92,64],
                 ['CM',24,49],['CM',50,52],['CM',76,49],['ST',37,15],['ST',63,15]]
 };
-
-var squad = { formation:'4-3-3', ids:new Array(11).fill(null) };
-
-/* Både autofyld og optimeringen scanner efter faldende rating. P er sorteret
-   efter EA's rank, hvilket i praksis er det samme — men vi antager det ikke. */
-var BY_OVR = P.slice().sort(function(a,b){ return b[OVR]-a[OVR]; });
+var squad={formation:'4-3-3', ids:new Array(11).fill(null)};
 
 function slots(){ return FORMATIONS[squad.formation]; }
 function squadPlayers(){ return squad.ids.map(function(id){ return id==null?null:byId[id]; }); }
+function inPosition(p,pos){ return !!p && (p[POS]===pos || p[ALT].indexOf(pos)>=0); }
+function threshold(n,t){ return n>=t[2]?3 : n>=t[1]?2 : n>=t[0]?1 : 0; }
 
-/* En spiller er i position hvis feltet matcher hoved- eller alternativposition. */
-function inPosition(p, pos){
-  return !!p && (p[POS]===pos || p[ALT].indexOf(pos)>=0);
-}
-
-function threshold(n, t){ return n>=t[2]?3 : n>=t[1]?2 : n>=t[0]?1 : 0; }
-
-/* Returnerer {chem:[11 tal], total, counts:{club,league,nation}} */
 function computeChem(){
   var sl=slots(), ps=squadPlayers();
-  var ok = ps.map(function(p,i){ return inPosition(p, sl[i][0]); });
-  var club={}, league={}, nation={};
+  var ok=ps.map(function(p,i){ return inPosition(p, sl[i][0]); });
+  var c={}, l={}, na={};
   ps.forEach(function(p,i){
     if(!ok[i]) return;
-    club[p[CLUB]]   = (club[p[CLUB]]||0)+1;
-    league[p[LEAGUE]]=(league[p[LEAGUE]]||0)+1;
-    nation[p[NAT]]  = (nation[p[NAT]]||0)+1;
+    c[p[CLUB]]=(c[p[CLUB]]||0)+1; l[p[LEAGUE]]=(l[p[LEAGUE]]||0)+1; na[p[NAT]]=(na[p[NAT]]||0)+1;
   });
-  var chem = ps.map(function(p,i){
+  var chem=ps.map(function(p,i){
     if(!ok[i]) return 0;
-    return Math.min(3,
-      threshold(club[p[CLUB]]||0,     CHEM_T.club) +
-      threshold(league[p[LEAGUE]]||0, CHEM_T.league) +
-      threshold(nation[p[NAT]]||0,    CHEM_T.nation));
+    return Math.min(3, threshold(c[p[CLUB]]||0,CHEM_T.club)+
+                       threshold(l[p[LEAGUE]]||0,CHEM_T.league)+
+                       threshold(na[p[NAT]]||0,CHEM_T.nation));
   });
-  return {
-    chem: chem,
-    total: chem.reduce(function(a,b){return a+b;},0),
-    ok: ok,
-    counts: {club:club, league:league, nation:nation}
-  };
+  return {chem:chem, ok:ok, total:chem.reduce(function(a,b){return a+b;},0),
+          counts:{club:c, league:l, nation:na}};
 }
-
 /* FUT's holdrating: gennemsnittet plus overskuddet fra spillere over det. */
 function squadRating(ps){
-  var xs=ps.filter(Boolean).map(function(p){return p[OVR];});
+  var xs=ps.filter(Boolean).map(function(p){ return p[OVR]; });
   if(!xs.length) return null;
-  var n=11, total=xs.reduce(function(a,b){return a+b;},0), avg=total/n;
+  var n=11, sum=xs.reduce(function(a,b){return a+b;},0), avg=sum/n;
   var surplus=xs.reduce(function(a,r){ return a+Math.max(0,r-avg); },0);
-  return Math.floor((total+surplus)/n);
+  return Math.floor((sum+surplus)/n);
 }
 
-/* ---------- rendering ---------- */
 var pitch=document.getElementById('pitch');
-
 function renderPitch(){
   var sl=slots(), ps=squadPlayers(), c=computeChem();
   pitch.querySelectorAll('.slot').forEach(function(el){ el.remove(); });
-
   sl.forEach(function(def,i){
-    var pos=def[0], p=ps[i], oop = p && !c.ok[i];
+    var pos=def[0], p=ps[i], oop=p && !c.ok[i];
     var b=document.createElement('button');
-    b.className='slot'+(p?' filled':'')+(oop?' oop':'');
-    b.style.left=def[1]+'%'; b.style.top=def[2]+'%';
-    b.dataset.slot=i;
+    b.className='slot'+(oop?' oop':''); b.type='button';
+    b.style.left=def[1]+'%'; b.style.top=def[2]+'%'; b.dataset.slot=i;
     b.setAttribute('aria-label', pos+(p?': '+p[NAME]:': tom plads'));
-
-    var pips='<span class="chempips">'+[0,1,2].map(function(k){
+    var pips='<span class="pips">'+[0,1,2].map(function(k){
       return '<i class="'+(k<c.chem[i]?'on':'')+'"></i>'; }).join('')+'</span>';
-
-    b.innerHTML='<span class="slot-inner">'+
-      '<span class="slot-pos">'+pos+'</span>'+
-      (p ? '<img class="slot-img" src="'+portrait(p[ID])+'" alt="" loading="lazy" '+
-             'onerror="this.onerror=null;this.src=FUT_SILHOUETTE;this.style.opacity=.35">'+
+    b.innerHTML='<span class="slot-in"><span class="slot-pos">'+pos+'</span>'+
+      (p ? '<img class="slot-img" src="'+portrait(p[ID])+'" alt="" loading="lazy" onerror="this.remove()">'+
            '<span class="slot-ovr">'+p[OVR]+'</span>'+
-           '<span class="slot-name">'+esc(p[NAME])+'</span>'+pips
-         : '<span class="slot-empty">+</span>')+
-      '</span>'+(p?'<span class="rm" role="button" aria-label="Fjern">×</span>':'');
+           '<span class="slot-name">'+esc(shortName(p))+'</span>'+pips
+         : '<span class="slot-empty">+</span>')+'</span>'+
+      (p?'<span class="rm" role="button" aria-label="Fjern">×</span>':'');
     pitch.appendChild(b);
   });
-
   document.getElementById('sqChem').textContent=c.total;
   var r=squadRating(ps);
   document.getElementById('sqRating').textContent = r===null ? '—' : r;
   renderLinks(c, ps);
-  syncSquadHash();
+  if(location.hash.indexOf('#/hold')===0) writeHash();
 }
 
 function renderLinks(c, ps){
-  var box=document.getElementById('links'), rows=[];
   function block(title, counts, lookup, t){
-    var items=Object.keys(counts).map(function(k){ return [k, counts[k]]; })
-      .filter(function(x){ return x[1]>1 || threshold(x[1],t)>0; })
-      .sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+    var items=Object.keys(counts).map(function(k){ return [k,counts[k]]; })
+      .filter(function(x){ return x[1]>1; })
+      .sort(function(a,b){ return b[1]-a[1]; }).slice(0,4);
     if(!items.length) return '';
-    return '<div style="margin-bottom:11px"><div class="n" style="font-size:11px;margin-bottom:3px">'+title+'</div>'+
+    return '<div style="margin-bottom:10px"><div class="lbl" style="margin-bottom:2px">'+title+'</div>'+
       items.map(function(x){
-        var nm = lookup(x[0]);
-        return '<div class="linkrow"><span>'+esc(nm)+'</span>'+
+        return '<div class="linkrow"><span>'+esc(lookup(x[0]))+'</span>'+
           '<b>'+x[1]+' <span class="n">→ '+threshold(x[1],t)+'</span></b></div>';
       }).join('')+'</div>';
   }
-  var html =
-    block('Klub',   c.counts.club,   function(k){ return (D.clubs[k]||['?'])[0]; },   CHEM_T.club)+
-    block('Liga',   c.counts.league, function(k){ return D.leagues[+k]||'?'; },        CHEM_T.league)+
-    block('Nation', c.counts.nation, function(k){ return (D.nations[k]||['?'])[0]; }, CHEM_T.nation);
-  box.innerHTML = html || '<p class="hint" style="margin:0">Ingen forbindelser endnu.</p>';
+  var html=block('Klub',c.counts.club,function(k){ return (D.clubs[k]||['?'])[0]; },CHEM_T.club)+
+           block('Liga',c.counts.league,function(k){ return D.leagues[+k]||'?'; },CHEM_T.league)+
+           block('Nation',c.counts.nation,function(k){ return (D.nations[k]||['?'])[0]; },CHEM_T.nation);
+  document.getElementById('links').innerHTML = html ||
+    '<p class="subline" style="margin:0">Sæt spillere på banen for at se forbindelser.</p>';
 
-  var filled=ps.filter(Boolean);
-  var avgBox=document.getElementById('sqAvg');
-  if(!filled.length){ avgBox.innerHTML='<p class="hint" style="margin:0">Tomt hold.</p>'; return; }
-  avgBox.innerHTML = FACE.map(function(k,i){
+  var filled=ps.filter(Boolean), box=document.getElementById('sqAvg');
+  if(!filled.length){ box.innerHTML='<p class="subline" style="margin:0">Tomt hold.</p>'; return; }
+  box.innerHTML=FACE.map(function(k,i){
     var v=Math.round(filled.reduce(function(a,p){ return a+p[STATS][FACE_IDX[i]]; },0)/filled.length);
-    return '<div class="linkrow"><span class="n">'+FACE_FULL[k]+'</span><b>'+v+'</b></div>';
+    return '<div class="linkrow"><span class="n">'+FACE_DA[i]+'</span><b>'+v+'</b></div>';
   }).join('')+'<div class="linkrow"><span class="n">Spillere</span><b>'+filled.length+'/11</b></div>';
 }
 
-/* ---------- spillervælger ---------- */
 var pickDlg=document.getElementById('pickDlg'), pickSlot=null, pickAll=false;
-
 function openPicker(i){
   pickSlot=i; pickAll=false;
-  pickDlg.innerHTML=
-    '<button class="d-close" aria-label="Luk">×</button>'+
-    '<div style="padding:20px">'+
-      '<h2 style="margin:0 0 4px;font-size:18px">Vælg spiller til '+slots()[i][0]+'</h2>'+
-      '<p class="hint" style="margin:0 0 12px">Kun spillere der kan stå på pladsen. '+
-        'Andre får 0 chemistry og tæller ikke med for holdkammeraterne.</p>'+
-      '<input type="text" id="pickQ" placeholder="Søg navn, klub eller nation…" autocomplete="off" '+
-        'style="width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none">'+
-      '<label class="psitem" style="padding-left:0;margin-top:8px">'+
-        '<input type="checkbox" id="pickAll"> Vis også spillere ude af position</label>'+
-      '<div class="pick-list" id="pickList"></div>'+
-    '</div>';
-  pickDlg.querySelector('.d-close').addEventListener('click',function(){ pickDlg.close(); });
-  var q=pickDlg.querySelector('#pickQ'), timer;
-  q.addEventListener('input',function(){ clearTimeout(timer); timer=setTimeout(renderPick,140); });
-  pickDlg.querySelector('#pickAll').addEventListener('change',function(e){
-    pickAll=e.target.checked; renderPick();
+  pickDlg.innerHTML='<button class="dl-close" aria-label="Luk">×</button><div class="dl-in">'+
+    '<h2 class="h2" style="margin:0">Vælg spiller til '+slots()[i][0]+'</h2>'+
+    '<p class="subline">Kun spillere der kan stå på pladsen. Andre får 0 chemistry og tæller '+
+      'ikke med for holdkammeraterne.</p>'+
+    '<label class="fld" style="margin-top:12px"><span class="gl" aria-hidden="true">⌕</span>'+
+      '<input id="pickQ" type="search" placeholder="Søg navn, klub eller nation…" autocomplete="off"></label>'+
+    '<button class="cbrow" id="pickAll" style="margin-top:8px"><span class="cb">✓</span>'+
+      '<span class="t">Vis også spillere ude af position</span></button>'+
+    '<div class="picklist" id="pickList"></div></div>';
+  pickDlg.querySelector('.dl-close').addEventListener('click',function(){ pickDlg.close(); });
+  var q=pickDlg.querySelector('#pickQ'), t;
+  q.addEventListener('input',function(){ clearTimeout(t); t=setTimeout(renderPick,140); });
+  pickDlg.querySelector('#pickAll').addEventListener('click',function(){
+    pickAll=!pickAll; this.classList.toggle('on',pickAll); renderPick();
   });
-  renderPick();
-  pickDlg.showModal();
-  q.focus();
+  renderPick(); pickDlg.showModal(); q.focus();
 }
-
 function renderPick(){
   var pos=slots()[pickSlot][0];
   var term=norm((pickDlg.querySelector('#pickQ')||{value:''}).value.trim());
   var used=squad.ids.filter(function(x,i){ return x!=null && i!==pickSlot; });
   var out=[];
-  for(var i=0;i<P.length && out.length<300;i++){
-    var p=P[i];
+  for(var i=0;i<BY_OVR.length && out.length<200;i++){
+    var p=BY_OVR[i];
     if(used.indexOf(p[ID])>=0) continue;
     var fits=inPosition(p,pos);
     if(!fits && !pickAll) continue;
@@ -1621,24 +1530,20 @@ function renderPick(){
   out.sort(function(a,b){ return (b[1]-a[1]) || b[0][OVR]-a[0][OVR]; });
   pickDlg.querySelector('#pickList').innerHTML = out.length ? out.map(function(r){
     var p=r[0];
-    return '<button class="pick-row" data-pid="'+p[ID]+'">'+
-      '<img src="'+portrait(p[ID])+'" alt="" loading="lazy" '+
-        'onerror="this.onerror=null;this.src=FUT_SILHOUETTE;this.style.opacity=.3">'+
+    return '<button class="pickrow" data-pid="'+p[ID]+'">'+
+      '<img src="'+portrait(p[ID])+'" alt="" loading="lazy" onerror="this.remove()">'+
       '<span class="nm">'+esc(p[NAME])+'</span>'+
-      '<span class="meta">'+p[POS]+' · '+esc(club(p)[0])+'</span>'+
+      '<span class="mt">'+p[POS]+' · '+esc(club(p)[0])+'</span>'+
       (r[1]?'':'<span class="oop">ude af position</span>')+
       '<span class="ov">'+p[OVR]+'</span></button>';
-  }).join('') : '<p class="hint">Ingen spillere matcher.</p>';
-
-  pickDlg.querySelectorAll('.pick-row').forEach(function(b){
+  }).join('') : '<p class="subline">Ingen spillere matcher.</p>';
+  pickDlg.querySelectorAll('.pickrow').forEach(function(b){
     b.addEventListener('click',function(){
-      squad.ids[pickSlot]=+b.dataset.pid;
-      pickDlg.close(); renderPitch();
+      squad.ids[pickSlot]=+b.dataset.pid; pickDlg.close(); renderPitch();
     });
   });
 }
 pickDlg.addEventListener('click',function(e){ if(e.target===pickDlg) pickDlg.close(); });
-
 pitch.addEventListener('click',function(e){
   var rm=e.target.closest('.rm');
   if(rm){ squad.ids[+rm.parentNode.dataset.slot]=null; renderPitch(); return; }
@@ -1646,7 +1551,6 @@ pitch.addEventListener('click',function(e){
   if(sl) openPicker(+sl.dataset.slot);
 });
 
-/* ---------- formation, handlinger ---------- */
 var formSel=document.getElementById('formation');
 Object.keys(FORMATIONS).forEach(function(f){
   var o=document.createElement('option'); o.value=f; o.textContent=f; formSel.appendChild(o);
@@ -1654,7 +1558,6 @@ Object.keys(FORMATIONS).forEach(function(f){
 formSel.value=squad.formation;
 formSel.addEventListener('change',function(e){
   squad.formation=e.target.value;
-  /* Behold spillere der stadig passer på den nye plads; smid resten ud. */
   var sl=slots();
   squad.ids=squad.ids.map(function(id,i){
     var p=id==null?null:byId[id];
@@ -1663,12 +1566,10 @@ formSel.addEventListener('change',function(e){
   renderPitch();
 });
 
-/* Bedste XI: højeste rating pr. plads, uden gengangere. Pladserne fyldes i
-   rækkefølge efter hvor få kandidater de har, så sjældne positioner ikke
-   bliver spist af en tidligere plads. */
+/* Bedste XI: højeste rating pr. plads, uden gengangere. Pladserne fyldes efter
+   hvor få kandidater de har, så sjældne positioner ikke bliver spist først. */
 function autoFill(){
-  var sl=slots();
-  var pool=BY_OVR;
+  var sl=slots(), pool=BY_OVR;
   var order=sl.map(function(d,i){ return i; }).sort(function(a,b){
     function n(i){ var c=0; for(var k=0;k<pool.length && c<40;k++) if(inPosition(pool[k],sl[i][0])) c++; return c; }
     return n(a)-n(b);
@@ -1682,25 +1583,19 @@ function autoFill(){
       ids[i]=p[ID]; used[p[ID]]=1; return;
     }
   });
-  squad.ids=ids;
-  renderPitch();
+  squad.ids=ids; renderPitch();
 }
-
-/* Chemistry-optimering: bytter gentagne gange en spiller ud med en kandidat der
-   hæver den samlede chemistry uden at koste mere end 1 i holdrating. Grådig og
-   lokal — ikke en garanteret optimal løsning, men hurtig og forudsigelig. */
+/* Grådig og lokal optimering: bytter en spiller ud når det hæver chemistry
+   uden at koste mere end 1 i holdrating. Ikke garanteret optimal. */
 function optimiseChem(){
   var sl=slots();
-  if(squad.ids.every(function(x){ return x===null; })){ autoFill(); }
-  var best=computeChem().total, bestRating=squadRating(squadPlayers()) || 0;
+  if(squad.ids.every(function(x){ return x===null; })) autoFill();
+  var best=computeChem().total, bestRating=squadRating(squadPlayers())||0;
   var improved=true, rounds=0;
-
   while(improved && rounds<6){
     improved=false; rounds++;
     for(var i=0;i<11;i++){
-      var cur=squad.ids[i];
-      var curP=cur==null?null:byId[cur];
-      /* Kandidater: samme position, højst 4 rating under den nuværende. */
+      var cur=squad.ids[i], curP=cur==null?null:byId[cur];
       var floorOvr=(curP?curP[OVR]:0)-4;
       for(var k=0;k<BY_OVR.length;k++){
         var q=BY_OVR[k];
@@ -1708,7 +1603,7 @@ function optimiseChem(){
         if(squad.ids.indexOf(q[ID])>=0) continue;
         if(!inPosition(q, sl[i][0])) continue;
         squad.ids[i]=q[ID];
-        var c=computeChem().total, r=squadRating(squadPlayers()) || 0;
+        var c=computeChem().total, r=squadRating(squadPlayers())||0;
         if(c>best && r>=bestRating-1){ best=c; bestRating=r; improved=true; break; }
         squad.ids[i]=cur;
       }
@@ -1716,137 +1611,175 @@ function optimiseChem(){
   }
   renderPitch();
 }
-
-document.getElementById('sqAuto').addEventListener('click',function(){ autoFill(); });
-document.getElementById('sqOptimise').addEventListener('click',function(){
+document.getElementById('sqAuto').addEventListener('click',autoFill);
+document.getElementById('sqOpt').addEventListener('click',function(){
   var b=this; b.disabled=true; b.textContent='Optimerer…';
   setTimeout(function(){ optimiseChem(); b.disabled=false; b.textContent='Optimér chemistry'; },20);
 });
 document.getElementById('sqClear').addEventListener('click',function(){
   squad.ids=new Array(11).fill(null); renderPitch();
 });
-document.getElementById('sqShare').addEventListener('click',function(){
-  var b=this;
-  var done=function(ok){ b.textContent = ok?'Kopieret ✓':'Kopiér manuelt';
-    setTimeout(function(){ b.textContent='Kopiér link'; },1400); };
-  var url=location.href;
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(function(){done(true);},function(){done(false);});
-  } else done(false);
-});
 
-/* ---------- visningsskift ---------- */
-var viewTabs=document.getElementById('viewTabs');
+/* ==========================================================================
+   Routing — #/ · #/spillere · #/spiller/:id · #/hold
+   ========================================================================== */
+var VIEWS={home:'view-home', players:'view-players', player:'view-player', squad:'view-squad'};
+var currentView=null, currentId=null, muteHash=false;
+
 function setView(v){
-  var squadOn = v==='squad';
-  document.querySelector('.wrap').classList.toggle('squad-mode', squadOn);
-  document.getElementById('squadView').hidden = !squadOn;
-  document.querySelector('.wrap > main:not(#squadView)').hidden = squadOn;
-  document.getElementById('filters').style.display = squadOn ? 'none' : '';
-  document.querySelector('.search').style.visibility = squadOn ? 'hidden' : '';
-  document.querySelector('.sortwrap').style.display = squadOn ? 'none' : '';
-  document.querySelector('.count').style.display = squadOn ? 'none' : '';
-  [].forEach.call(viewTabs.children,function(c){
-    c.setAttribute('aria-pressed', c.dataset.view===v ? 'true':'false'); });
-  if(squadOn) renderPitch();
+  currentView=v;
+  Object.keys(VIEWS).forEach(function(k){
+    document.getElementById(VIEWS[k]).hidden = k!==v;
+  });
+  [].forEach.call(document.querySelectorAll('#nav a'),function(a){
+    a.classList.toggle('on', a.dataset.v===v || (v==='player' && a.dataset.v==='players'));
+  });
 }
-viewTabs.addEventListener('click',function(e){
-  var b=e.target.closest('button'); if(b) setView(b.dataset.view);
-});
 
-/* ---------- holdet i URL'en ---------- */
-function syncSquadHash(){
-  if(document.getElementById('squadView').hidden) return;
-  var parts=['view=squad','f='+encodeURIComponent(squad.formation)];
-  if(squad.ids.some(Boolean)) parts.push('s='+squad.ids.map(function(x){return x==null?'':x;}).join('.'));
-  history.replaceState(null,'','#'+parts.join('&'));
+function encodeFilters(){
+  var q=[];
+  function put(k,v){ if(v!=='' && v!=null && v!==false) q.push(k+'='+encodeURIComponent(v)); }
+  put('q', document.getElementById('fq').value.trim());
+  if(F.sort!=='Rating') put('sort',F.sort);
+  if(F.posMode!=='Alle') put('pm',F.posMode);
+  if(F.pos.length) put('pos',F.pos.join(','));
+  if(F.leagues.length) put('lg',F.leagues.join(','));
+  if(F.nations.length) put('nat',F.nations.join(','));
+  if(F.clubs.length) put('cl',F.clubs.join(','));
+  put('rmin',F.ratMin); put('rmax',F.ratMax);
+  put('dmin',F.dMin); put('dmax',F.dMax); if(F.onlyNew) put('ny','1');
+  if(F.minSk) put('sk',F.minSk); if(F.minWf) put('wf',F.minWf);
+  var st=[];
+  FACE.forEach(function(k){
+    if(F.statMin[k]||F.statMax[k]) st.push(k+':'+(F.statMin[k]||'')+'-'+(F.statMax[k]||''));
+  });
+  if(st.length) put('st',st.join(','));
+  if(F.accel.length) put('ac',F.accel.join('|'));
+  put('foot',F.foot); put('g',F.gender);
+  put('hmin',F.hMin); put('hmax',F.hMax); put('amin',F.ageMin); put('amax',F.ageMax);
+  if(F.limit!==15) put('n',F.limit);
+  return q.length ? '?'+q.join('&') : '';
 }
-function readSquadHash(){
-  var h=location.hash.slice(1); if(h.indexOf('view=squad')<0) return false;
-  h.split('&').forEach(function(pair){
+function decodeFilters(qs){
+  var o={};
+  qs.replace(/^\?/,'').split('&').forEach(function(pair){
+    if(!pair) return;
     var i=pair.indexOf('='); if(i<0) return;
-    var k=pair.slice(0,i), v=decodeURIComponent(pair.slice(i+1));
-    if(k==='f' && FORMATIONS[v]){ squad.formation=v; formSel.value=v; }
-    else if(k==='s'){
-      squad.ids=v.split('.').map(function(x){ var n=+x; return x===''||!byId[n] ? null : n; });
+    o[pair.slice(0,i)]=decodeURIComponent(pair.slice(i+1));
+  });
+  document.getElementById('fq').value = o.q||'';
+  F.q = o.q ? norm(o.q) : '';
+  F.sort = SORTS[o.sort] ? o.sort : 'Rating';
+  document.getElementById('sortSel').value=F.sort;
+  F.posMode = ['Alle','Primær','Alternativ'].indexOf(o.pm)>=0 ? o.pm : 'Alle';
+  F.pos = o.pos ? o.pos.split(',').filter(function(x){ return ALL_POS.indexOf(x)>=0; }) : [];
+  F.leagues = o.lg  ? o.lg.split(',')  : [];
+  F.nations = o.nat ? o.nat.split(',') : [];
+  F.clubs   = o.cl  ? o.cl.split(',')  : [];
+  F.ratMin=o.rmin||''; F.ratMax=o.rmax||'';
+  F.dMin=o.dmin||''; F.dMax=o.dmax||''; F.onlyNew=o.ny==='1';
+  F.minSk=+o.sk||0; F.minWf=+o.wf||0;
+  F.statMin={}; F.statMax={};
+  if(o.st) o.st.split(',').forEach(function(part){
+    var m=part.split(':'); if(m.length<2 || FACE.indexOf(m[0])<0) return;
+    var r=m[1].split('-'); F.statMin[m[0]]=r[0]||''; F.statMax[m[0]]=r[1]||'';
+  });
+  F.accel = o.ac ? o.ac.split('|') : [];
+  F.foot=o.foot||''; F.gender=o.g||'';
+  F.hMin=o.hmin||''; F.hMax=o.hmax||''; F.ageMin=o.amin||''; F.ageMax=o.amax||'';
+  F.limit=Math.max(15, +o.n||15);
+}
+function encodeSquad(){
+  var q=['f='+encodeURIComponent(squad.formation)];
+  if(squad.ids.some(Boolean)) q.push('s='+squad.ids.map(function(x){ return x==null?'':x; }).join('.'));
+  return '?'+q.join('&');
+}
+function writeHash(){
+  if(muteHash) return;
+  var h = currentView==='players' ? '#/spillere'+encodeFilters()
+        : currentView==='squad'   ? '#/hold'+encodeSquad()
+        : null;
+  if(h && h!==location.hash) history.replaceState(null,'',h);
+}
+
+function route(){
+  var h=location.hash.replace(/^#/,'') || '/';
+  var qi=h.indexOf('?'), path=qi<0?h:h.slice(0,qi), qs=qi<0?'':h.slice(qi);
+  muteHash=true;
+  if(path.indexOf('/spiller/')===0){
+    currentId=+path.slice(9);
+    setView('player'); pTab='Egenskaber'; renderPlayer(currentId);
+  } else if(path==='/spillere'){
+    decodeFilters(qs); openFilter=null;
+    setView('players'); renderPlayers();
+  } else if(path==='/hold'){
+    var o={};
+    qs.replace(/^\?/,'').split('&').forEach(function(pair){
+      var i=pair.indexOf('='); if(i>0) o[pair.slice(0,i)]=decodeURIComponent(pair.slice(i+1));
+    });
+    if(FORMATIONS[o.f]){ squad.formation=o.f; formSel.value=o.f; }
+    if(o.s){
+      squad.ids=o.s.split('.').map(function(x){ var n=+x; return x===''||!byId[n]?null:n; });
       while(squad.ids.length<11) squad.ids.push(null);
       squad.ids=squad.ids.slice(0,11);
     }
-  });
-  return true;
-}
-
-/* ---------- Delbar URL ---------- */
-var HASH_KEYS=['q','ovrMin','ovrMax','type','gender','league','club','nation','foot','skills','weak','ageMax','hMin','change','sort'];
-function syncHash(){
-  var parts=[];
-  HASH_KEYS.forEach(function(k){
-    var v=F[k], def={q:'',ovrMin:40,ovrMax:99,type:'',gender:'',league:'',club:'',nation:'',
-      foot:'',skills:1,weak:1,ageMax:45,hMin:150,change:'',sort:'ovr'}[k];
-    if(String(v)!==String(def)) parts.push(k+'='+encodeURIComponent(v));
-  });
-  if(F.pos.length) parts.push('pos='+F.pos.join(','));
-  if(F.ps.length) parts.push('ps='+F.ps.join(','));
-  if(F.altPos) parts.push('altPos=1');
-  if(F.accel.length) parts.push('accel='+F.accel.join('|'));
-  Object.keys(F.stats).forEach(function(k){ parts.push('m'+k+'='+F.stats[k]); });
-  var h=parts.join('&');
-  if(h !== location.hash.slice(1)){
-    history.replaceState(null,'', h ? '#'+h : location.pathname+location.search);
+    setView('squad'); renderPitch();
+  } else {
+    setView('home'); renderHome();
   }
+  muteHash=false;
+  window.scrollTo(0,0);
 }
-function readHash(){
-  var h=location.hash.slice(1); if(!h) return;
-  h.split('&').forEach(function(pair){
-    var i=pair.indexOf('='); if(i<0) return;
-    var k=pair.slice(0,i), v=decodeURIComponent(pair.slice(i+1));
-    if(k==='pos'){ F.pos=v.split(',').filter(Boolean);
-      [].forEach.call(posChips.children,function(c){
-        c.setAttribute('aria-pressed', F.pos.indexOf(c.dataset.pos)>=0?'true':'false'); });
-    }
-    else if(k==='ps'){ F.ps=v.split(',').filter(Boolean).map(Number); renderPsList(''); }
-    else if(k==='altPos'){ F.altPos=true; document.getElementById('altPos').checked=true; }
-    else if(k==='accel'){
-      F.accel=v.split('|').filter(Boolean);
-      [].forEach.call(accelChips.children,function(c){
-        c.setAttribute('aria-pressed', F.accel.indexOf(c.dataset.accel)>=0?'true':'false'); });
-    }
-    else if(k.charAt(0)==='m' && FACE.indexOf(k.slice(1))>=0){
-      var s=k.slice(1); F.stats[s]=+v;
-      var inp=statFilters.querySelector('[data-stat="'+s+'"]');
-      if(inp){ inp.value=v; inp.parentNode.querySelector('.v').textContent=v; }
-    }
-    else if(HASH_KEYS.indexOf(k)>=0){
-      var numeric = ['ovrMin','ovrMax','skills','weak','ageMax','hMin'].indexOf(k)>=0;
-      F[k] = numeric ? +v : v;
-      /* Feltet viser den rå tekst, mens filteret holder den normaliserede version. */
-      var el=document.getElementById(k);
-      if(el && 'value' in el) el.value = v;
-      if(k==='q' || k==='club' || k==='nation') F[k]=norm(v);
-      if(k==='type' || k==='gender' || k==='foot' || k==='change'){
-        [].forEach.call(document.getElementById(k+'Seg').children,function(c){
-          c.setAttribute('aria-pressed', c.dataset.v===v?'true':'false'); });
-      }
-    }
-  });
-  document.getElementById('ovrMinV').textContent=F.ovrMin+'+';
-  document.getElementById('ovrMaxV').textContent='–'+F.ovrMax;
-  document.getElementById('skillsV').textContent=F.skills;
-  document.getElementById('weakV').textContent=F.weak;
-  document.getElementById('ageMaxV').textContent=F.ageMax>=45?'Alle':F.ageMax+' år';
-}
+window.addEventListener('hashchange', route);
 
-/* ---------- Start ---------- */
-document.getElementById('total').textContent=D.meta.total.toLocaleString('da-DK');
-document.getElementById('genstamp').textContent=
-  'Datasæt hentet '+D.meta.generatedAt.replace('T',' ').replace('Z',' UTC')+
-  ' · '+D.meta.total.toLocaleString('da-DK')+' spillere · '+
-  Object.keys(D.clubs).length+' klubber · '+Object.keys(D.nations).length+' nationer · '+
-  D.leagues.length+' ligaer.';
+/* Søgefelterne i header og hero fører til databasen. */
+document.getElementById('hq').addEventListener('keydown',function(e){
+  if(e.key!=='Enter') return;
+  location.hash='#/spillere?q='+encodeURIComponent(this.value.trim());
+});
+document.getElementById('heroForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  location.hash='#/spillere?q='+encodeURIComponent(document.getElementById('heroQ').value.trim());
+});
 
-if(readSquadHash()){ setView('squad'); }
-else { readHash(); }
-update();
+/* ---------- Om data ---------- */
+var aboutDlg=document.getElementById('aboutDlg');
+document.getElementById('aboutBtn').addEventListener('click',function(){
+  aboutDlg.innerHTML='<button class="dl-close" aria-label="Luk">×</button><div class="dl-in">'+
+    '<h2 class="h2" style="margin:0">Om data</h2>'+
+    '<p class="prose">Alle kort kommer fra EA\'s egen ratings-API '+
+      '(<code>drop-api.ea.com/rating/ea-sports-fc</code>) — den samme kilde ea.com selv bruger. '+
+      'Ingen nøgle, ingen login, ingen skrabning af andres sider.</p>'+
+    '<div class="facts">'+
+      '<div><div class="k">Udgave</div><div class="v">'+esc(D.meta.edition)+'</div></div>'+
+      '<div><div class="k">Kort</div><div class="v">'+nf(P.length)+'</div></div>'+
+      '<div><div class="k">Hentet</div><div class="v">'+esc(D.meta.generatedAt.slice(0,10))+'</div></div>'+
+      '<div><div class="k">Klubber</div><div class="v">'+nf(Object.keys(D.clubs).length)+'</div></div>'+
+      '<div><div class="k">Ligaer</div><div class="v">'+nf(D.leagues.length)+'</div></div>'+
+      '<div><div class="k">Nationer</div><div class="v">'+nf(Object.keys(D.nations).length)+'</div></div>'+
+    '</div>'+
+    '<h2 class="h2">Hvad vi ikke har</h2>'+
+    '<p class="prose"><b>Markedspriser.</b> De findes ikke i ratings-API\'et. De sider der viser dem, '+
+      'samler dem ind fra spillernes egne browsere via en udvidelse, og alle prisruter er lukket bag '+
+      'bot-beskyttelse. Derfor er der ingen priser her — hellere ingen tal end opdigtede.</p>'+
+    '<p class="prose"><b>PlayStyles.</b> EA har endnu ikke lagt dem i FC 27-datasættet. '+
+      'De dukker op her, så snart de gør.</p>'+
+    '<p class="prose"><b>Sæsonstatistik fra virkeligheden.</b> Ikke en del af kilden.</p>'+
+    '<h2 class="h2">Dækning</h2>'+
+    '<p class="prose">'+nf(HAS_PREV_N)+' kort ('+Math.round(HAS_PREV_N/P.length*100)+' %) findes også i '+
+      esc(D.meta.previousEdition)+', så de har et ratingspring. Højde, vægt og løbestil er beriget fra '+
+      'FUT.GG\'s åbne definitionsdata og dækker 70–78 % af kortene.</p>'+
+    '</div>';
+  aboutDlg.querySelector('.dl-close').addEventListener('click',function(){ aboutDlg.close(); });
+  aboutDlg.showModal();
+});
+aboutDlg.addEventListener('click',function(e){ if(e.target===aboutDlg) aboutDlg.close(); });
+
+document.getElementById('footData').textContent =
+  'Ratings og egenskaber fra EA\'s ratings-API · '+D.meta.edition+' · hentet '+
+  D.meta.generatedAt.slice(0,10)+' · ingen markedspriser.';
+
+route();
 })();
 </script>
 </body>

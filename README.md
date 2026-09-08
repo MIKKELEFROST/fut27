@@ -1,17 +1,30 @@
-# fut27
+# FIFA Centralen — fut27
 
-Spillerdatabase for **EA SPORTS FC 27** — bladr i og filtrér alle 20.689
-spillerkort. Ren statisk HTML: ingen backend, ingen API-nøgle, intet build-trin.
+Dansk kortdatabase for **EA SPORTS FC 27** — ratings, egenskaber og meta på alle
+20.689 spillerkort, plus en squad builder med chemistry. Ren statisk HTML: ingen
+backend, ingen API-nøgle, intet build-trin.
 
 **Live: https://mikkelefrost.github.io/fut27/**
 
 Åbn `index.html` lokalt (virker også ved at dobbeltklikke filen).
 
+## Sider
+
+| Rute | Skærm |
+|---|---|
+| `#/` | Forside — hero, "Kort i fokus", største ratingspring, højeste rating |
+| `#/spillere` | Databasen — ni filterpaneler og resultattabel |
+| `#/spiller/:id` | Spillerside — kort, udvikling, fire faner, lignende kort |
+| `#/hold` | Squad Builder — bane, chemistry, holdrating |
+
+Filtre og opstillinger ligger i hash'en, så en visning kan deles præcist:
+`#/spillere?pos=GK&rmin=85`, `#/hold?f=4-3-3&s=220901.239231.…`
+
 ## Udgivelse
 
 Siden ligger på GitHub Pages og opdateres automatisk ved hvert push til `main`
-via `.github/workflows/pages.yml`. Kun `index.html` og `data/players.js`
-udgives; `tools/` er byggeværktøj.
+via `.github/workflows/pages.yml`. Kun `index.html`, `data/players.js` og
+`assets/` udgives; `tools/` er byggeværktøj.
 
 Pages blev slået til ved at oprette `gh-pages`-branchen — Actions-tokenet må
 ikke oprette et Pages-site selv (`configure-pages` med `enablement: true` fejler
@@ -74,44 +87,77 @@ EA's drop-api efterlader `height` og `weight` tomme i hele FC 27-droppet og har
 slet ikke accelerationstype. FUT.GG's definition-endpoint er åbent og har alle
 tre, så `enrich_futgg.py` henter dem derfra.
 
-Dækning: **16.164 af 20.689** (78 %) for højde og accelerationstype, 14.584 for
-vægt. Hullerne sidder i bunden af rangeringen. Siden viser dækningsgraden i
-filterpanelet frem for at lade brugeren tro, at filteret er i stykker.
+Dækning: **16.164 af 20.689** (78 %) for højde og accelerationstype, 14.584
+(70 %) for vægt. Hullerne sidder i bunden af rangeringen. "Om data"-dialogen
+viser dækningsgraden, og filterpanelet siger, at kort uden værdi falder ud af
+filteret — frem for at lade brugeren tro, at filteret er i stykker.
 
 `playerAbilities` (PlayStyles) er tom for alle spillere — også hos
 tredjeparter, og EA's egen filter-taksonomi bekræfter det
-(`playerAbilities: []`). PlayStyles-filteret skjules automatisk og dukker op af
-sig selv, når et datasæt igen har dem.
-
-### Kortgrafikken
-
-Kortene bruger EA's egne skabeloner, hentet fra FUT.GG's åbne asset-CDN og
-beskåret til det synlige kort:
-
-```
-assets/card-{gold,silver,bronze}.webp   406x564, 44-54 KB
-```
-
-Kilden har 12 % gennemsigtig luft i toppen — uden beskæringen passer CSS-forholdet
-ikke til det, man ser. WebP tager filerne fra ~450 KB til ~50 KB.
-
-Alt på kortet placeres i procent af skabelonen, og skriftstørrelser er sat i
-`cqw` med `container-type: inline-size`, så kortet skalerer i ét stykke fra
-mobil til desktop uden separate brudpunkter. To mål fra billedet styrer
-layoutet: delelinjen ligger 63,3 % nede (navnet står lige under den), og
-skjoldet går længst ned på midten — 99,6 % mod 93 % ude ved kanterne, så
-nations- og klublogo har plads centreret i bunden.
+(`playerAbilities: []`). Derfor findes der ikke et Spilstile-filter; pladsen i
+designet bruges i stedet til **Krop & løb** (løbestil, fod, køn, højde, alder),
+som er data vi rent faktisk har.
 
 ### Hvad vi ikke kan hente
 
 **Markedspriser.** FUT.GG's prisruter (`/api/fut/player-prices/…`) ligger bag
 Cloudflares JS-challenge, og FUTBIN, FUTWIZ og FUTNext blokerer al
 programmatisk adgang med HTTP 403. Det er bevidst adgangsbeskyttelse, og den
-omgår vi ikke. Dermed er priser, prisgrafer, "billigst pr. rating" og
-SBC-løsningsforslag uden for rækkevidde.
+omgår vi ikke. Konkurrenterne får deres priser ved at **crowdsource dem gennem
+deres egen browserudvidelse** — FUTBIN Updater beskriver det selv sådan:
+brugeren slår priser op i webappen, og udvidelsen sender resultatet tilbage.
+Dermed er priser, prisgrafer, "billigst pr. rating" og SBC-løsningsforslag uden
+for rækkevidde her.
 
 EA's officielle **FC Community API** ville give klub- og squaddata, men er kun
 åben for tre godkendte partnersites (FUT.GG, FUTBIN, FUTWIZ).
+
+## Design
+
+Designet kommer fra handoff-pakken **FIFA Centralen** (tokens, ni filterpaneler,
+kortgeometri, tilstandsmodel, 17 referenceskærmbilleder). Prototypen i pakken
+kørte på 62 opdigtede guldkort med opdigtede priser; her er datalaget skiftet
+ud med det rigtige.
+
+Fire steder afviger implementeringen bevidst fra prototypen, fordi designet
+byggede på data der ikke findes:
+
+| Designet | Her | Hvorfor |
+|---|---|---|
+| MARKEDSPULS (24 t prisændring) | **Største ratingspring** (FC 26 → FC 27) | Ingen priser. Ratingspringet er ægte historik, og ingen af prissiderne har det. |
+| `Pris`-filter, `PRIS`-kolonne, `Billigst`-fane, markedsboks, `Marked`-fane | `Ratingspring`-filter, `FC 26`-kolonne, `Største spring`-fane, udviklingsboks, `Udvikling`-fane | Samme. |
+| `Spilstile`-filter og SPILSTILE-badges | `Krop & løb`-filter og profil-badges | EA har ikke udgivet PlayStyles til FC 27. |
+| `Virkeligheden`-fane (sæsonstatistik + kommentarer) | `Profil`-fane (fødselsdato, krop, løbestil, EA-plads) | Sæsonstatistik og kommentarer var genereret; profilfelterne er ægte. |
+| "alle kort er guld i denne udgave" | guld, sølv og bronze | Datasættet spænder 47–91. |
+
+`Marked` og `SBC'er` i navigationen, platformskifteren `PS / Xbox` og `Log ind`
+er fjernet frem for at stå som døde knapper. `Squad Builder` er derimod bygget.
+
+Fanen `Kemistile` er en **udledning**, ikke hentet data: den fremhæver de stile,
+der løfter kortets stærkeste ansigtsstats, og siden siger det direkte i
+brødteksten.
+
+### Kortgrafikken
+
+Kortene bruger EA's egne skabeloner på designets lærred:
+
+```
+assets/kort-{guld,soelv,bronze}.webp   504x700, kunsten ligger i (48,83)–(458,652)
+```
+
+Guldkortet er filen fra handoff-pakken uændret; sølv og bronze er de tilsvarende
+EA-skabeloner lagt på samme lærred med samme forskydning, så alle tre deler
+geometri og kan bruge én og samme CSS.
+
+Alt på kortet placeres i procent af skabelonen, og skriftstørrelser er sat i
+`cqw` med `container-type: inline-size`, så kortet skalerer i ét stykke fra
+mobil til desktop uden separate brudpunkter. `padding: 24% 15% 17%` holder
+indholdet inden for skjoldet — procent-padding regnes altid ud fra bredden,
+også lodret, hvilket er præcis det, der får kortet til at skalere ensartet.
+
+Portrættet hotlinkes fra EA's CDN; slår det fejl, falder kortet tilbage til en
+cirkel med spillerens initialer (`futFace()` sætter `has-face` ved `onload` og
+fjerner billedet ved `onerror`).
 
 ## Hvorfor er data bundlet i stedet for hentet live?
 
@@ -146,39 +192,44 @@ python3 tools/build_dataset.py             # bygger players.js
 
 Rå sider caches i `tools/raw_*/` og er git-ignoreret — slet dem for at tvinge en
 frisk hentning. Bygningen fungerer også uden de valgfrie trin: mangler forrige
-årgang eller berigelsen, skjuler siden bare de tilhørende funktioner.
+årgang eller berigelsen, står de tilhørende felter bare tomme.
 
 EA efterjusterer ratings hen over september efter transfervinduet, så en refresh
 er en god idé et par uger inde i sæsonen.
 
-## Funktioner
+## Filtre
 
-**Filtre:** fritekst (accent-ufølsom, så "mbappe" finder "Mbappé"),
-rating-interval, position med eller uden alternativpositioner, spillerkategori,
-køn, liga, klub, nation, foretrukken fod, tricks, svag fod, maksimal alder,
-minimumshøjde, accelerationstype, ændring siden forrige årgang og minimumskrav
-på hver af de seks hovedattributter. PlayStyles, når datasættet har dem.
+Ni paneler, ét åbent ad gangen, alle med aktive filtre vist som fjernbare piller:
 
-**Sortering:** rating, hver hovedattribut, tricks, svag fod, alder, navn samt
-største stigning og største fald siden forrige årgang.
+| Panel | Indhold |
+|---|---|
+| Positioner | Alle/Primær/Alternativ + 12 positioner i tre grupper, med genveje |
+| Ligaer · Nationer · Klubber | søgbare afkrydsningslister (63 / 164 / 755) |
+| Ratingspring | min/maks + Nye i FC 27, +1–+2, +3–+5, +6 og op, Uændret, Nedgraderet |
+| Rating | min/maks + Bronze, Sølv, Guld, 84–86, 87–88, 89+ |
+| Tricks & ben | 1★–5★ for hver |
+| Stats | min/maks på hver af de seks hovedattributter |
+| Krop & løb | løbestil, fod, herre-/kvindefodbold, højde, alder |
+
+Fritekstsøgning er accent-ufølsom ("mbappe" finder "Mbappé") og dækker navn,
+klub, nation, liga og position. Sortering: rating, ratingspring, navn, alder.
+Tabellen viser 15 rækker ad gangen.
 
 **Ratingændring.** Fordi `drop-referrer` giver adgang til begge årgange, kan
-hver spiller vises med sin FC 26-rating og ændringen markeret direkte på kortet.
-9.768 spillere har fået ny rating, og 7.377 er nye i FC 27. Prissiderne følger
-kun ændringer inden for én sæson, så den her sammenligning findes ikke hos dem.
+hver spiller vises med sin FC 26-rating og ændringen. 9.768 spillere har fået ny
+rating, og 7.377 er nye i FC 27. Prissiderne følger kun ændringer inden for én
+sæson, så den her sammenligning findes ikke hos dem.
 
-**Sammenligning.** Op til fire spillere side om side over alle 40 attributter
-med den bedste værdi fremhævet pr. række.
+Målmandskort viser DIV/HAN/KIC/REF/SPE/POS i stedet for PAC/SHO/PAS/DRI/DEF/PHY;
+EA lægger målmandsværdierne i de samme seks felter. Målmænd får også deres egne
+egenskabsgrupper og en `/3400`-nævner i "samlede egenskaber" mod markspillernes
+`/2900`.
 
-**Lignende spillere.** Nærmeste nabo på de seks hovedattributter inden for samme
-position, vægtet med rating.
+## Squad Builder
 
-## Holdbygger med chemistry
-
-Fanen "Holdbygger" giver en bane med 11 pladser og 10 formationer (4-4-2,
-4-3-3, 4-2-3-1, 4-3-2-1, 4-1-2-1-2, 4-4-1-1, 4-2-2-2, 3-5-2, 3-4-2-1, 5-3-2).
-Kun de 12 positioner EA's ratingsdata indeholder bruges, så der er ingen
-LWB/RWB/CF-pladser.
+En bane med 11 pladser og 10 formationer (4-4-2, 4-3-3, 4-2-3-1, 4-3-2-1,
+4-1-2-1-2, 4-4-1-1, 4-2-2-2, 3-5-2, 3-4-2-1, 5-3-2). Kun de 12 positioner EA's
+ratingsdata indeholder bruges, så der er ingen LWB/RWB/CF-pladser.
 
 ### Chemistry-reglerne
 
@@ -194,7 +245,7 @@ De tre lægges sammen og loftes ved 3 pr. spiller, altså 33 for et fuldt hold.
 
 Den regel der betyder mest: **en spiller ude af position får 0 chemistry og
 tælles heller ikke med i holdkammeraternes forbindelser.** Beregningen tæller
-derfor kun spillere der står rigtigt. Et kort markeres sølvfarvet, når det står
+derfor kun spillere der står rigtigt, og en plads markeres rød, når kortet står
 ude af position.
 
 Ikoner og helte har særregler (dobbelttælling for nation henholdsvis liga), men
@@ -206,9 +257,9 @@ samme grund er der ingen manager-bonus.
 Gennemsnittet af de 11 ratings plus overskuddet fra spillere over gennemsnittet:
 
 ```
-avg     = sum / 11
+avg      = sum / 11
 overskud = Σ max(0, rating − avg)
-rating  = ⌊(sum + overskud) / 11⌋
+rating   = ⌊(sum + overskud) / 11⌋
 ```
 
 Et hold med 10 × 80 og 1 × 90 giver 81, ikke 81,9.
@@ -217,31 +268,23 @@ Et hold med 10 × 80 og 1 × 90 giver 81, ikke 81,9.
 
 - **Fyld bedste XI** — højest ratede spiller pr. plads uden gengangere. Pladser
   med færrest kandidater fyldes først, så en sjælden position ikke bliver spist
-  af en tidligere plads.
+  af en tidligere plads. Giver 90 i holdrating og 16 i chemistry.
 - **Optimér chemistry** — bytter gentagne gange en spiller ud med en kandidat
   på samme position, der hæver den samlede chemistry uden at koste mere end 1 i
-  holdrating. Grådig og lokal, ikke garanteret optimal — men den finder typisk
-  33/33 fra et 90-ratet udgangspunkt og lander på 89.
-- **Kopiér link** — holdet ligger i URL'ens hash (`#view=squad&f=4-3-3&s=…`),
-  så en opstilling kan deles og genindlæses præcist.
+  holdrating. Grådig og lokal, ikke garanteret optimal — men den finder 33/33
+  fra det udgangspunkt og lander på 89.
+- **Ryd hold** — tømmer banen.
 
-Formationsskift beholder de spillere der stadig passer på deres nye plads og
-rydder resten.
-
-Filtertilstanden ligger i URL'ens hash, så en filtreret visning kan deles —
-fx `#change=up&accel=5,6,7` for lange spillere der er steget.
-
-Målmandskort viser DIV/HAN/KIC/REF/SPE/POS i stedet for PAC/SHO/PAS/DRI/DEF/PHY;
-EA lægger målmandsværdierne i de samme seks felter.
-
-Kortene renderes i portioner på 60 via en IntersectionObserver, så alle 20.689
-kan filtreres uden at belaste DOM'en.
+Opstillingen skrives løbende til hash'en, så et hold kan deles ved at kopiere
+URL'en. Formationsskift beholder de spillere der stadig passer på deres nye
+plads og rydder resten.
 
 ## Filstruktur
 
 ```
-index.html                hele appen — spillerliste, holdbygger, CSS og JS i én fil
-assets/card-*.webp        EA's kortskabeloner (guld, sølv, bronze)
+index.html                hele appen — fire skærme, CSS og JS i én fil
+assets/kort-*.webp        EA's kortskabeloner på designets 504x700-lærred
+assets/logo.webp          FIFA Centralen-logoet (256 px)
 data/players.js           genereret datasæt (~4,5 MB, ~1,5 MB gzippet)
 tools/fetch_ratings.py    henter en årgang fra EA's drop-api
 tools/enrich_futgg.py     henter højde/vægt/accelerationstype fra FUT.GG
@@ -255,7 +298,7 @@ Feltrækkefølgen er defineret i `build_dataset.py` og spejlet i konstanterne
 
 ## Forbehold
 
-Uofficiel demo, ikke tilknyttet EA. Spillerbilleder og klublogoer hotlinkes fra
-EA's eget CDN og tilhører EA Sports. Højde, vægt og accelerationstype kommer fra
-FUT.GG's åbne definition-endpoint. `drop-referrer`-adfærden er udokumenteret og
-kan forsvinde uden varsel — derfor kontrollen i `fetch_ratings.py`.
+Uofficiel database, ikke tilknyttet EA. Spillerbilleder hotlinkes fra EA's eget
+CDN og tilhører EA Sports. Højde, vægt og accelerationstype kommer fra FUT.GG's
+åbne definition-endpoint. `drop-referrer`-adfærden er udokumenteret og kan
+forsvinde uden varsel — derfor kontrollen i `fetch_ratings.py`.
