@@ -203,10 +203,13 @@ h1,h2,h3{margin:0}
   font-family:var(--cond);font-weight:800;font-size:7.4cqw;line-height:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+/* Ingen streg over statlinjerne: skabelonen har allerede sin egen
+   adskillelse indbygget — kunsten skifter fra mønster til flad guldbund
+   omkring 61-64 % nede. En CSS-streg oveni giver kortet en linje, EA's
+   eget kort ikke har. */
 .k-stats{
   left:16%;right:16%;top:68.3%;z-index:1;
   display:grid;grid-template-columns:repeat(6,1fr);column-gap:.5%;
-  border-top:.35cqw solid var(--rule);padding-top:.9cqw;
 }
 .k-k{font-family:var(--cond);font-weight:800;font-size:3.7cqw;line-height:1;text-align:center}
 .k-v{font-family:var(--cond);font-weight:700;font-size:7.2cqw;line-height:1;text-align:center;padding-top:.7cqw}

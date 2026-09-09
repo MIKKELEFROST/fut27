@@ -165,12 +165,17 @@ Tallene er aflæst på et rigtigt FC-kort og regnet om fra kunstens kasse
 | Alternative positioner (højre, stablet) | højre 12,5 %, top 24,2 %, 5,3 cqw |
 | Portræt | bredde 60 %, klippet ved delelinjen 63,4 % |
 | Navn | top 62,2 %, 7,4 cqw |
-| Statlinjer | 16–84 %, top 68,3 %, etiket 3,7 cqw, tal 7,2 cqw |
+| Statlinjer | 16–84 %, top 68,3 %, etiket 3,7 cqw, tal 7,2 cqw (ingen streg) |
 | Nations- og klublogo | top 78,6 %, 6,3 cqw |
 | Fod, tricks, svag fod | top 85,2 %, 3,7 cqw |
 
 Skjoldet står i fuld bredde (9,7–90,7 %) fra 25 % til 83 % nede og smalner brat
 efter 86 % — derfor er der ikke plads til mere under fodrækken.
+
+Der skal **ingen streg** være over statlinjerne. Skabelonen har sin egen
+adskillelse indbygget: kunsten skifter fra mønster til flad guldbund omkring
+61–64 % nede, og navnet står lige under skiftet. En CSS-streg oveni giver
+kortet en linje, EA's eget kort ikke har.
 
 Portrættet hotlinkes fra EA's CDN. Billederne er 512×512 med hovedtop ved
 10,7 %, hage ved ca. 72 % og skuldrene flugtende med underkanten;
