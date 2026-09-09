@@ -164,10 +164,13 @@ Tallene er aflæst på et rigtigt FC-kort og regnet om fra kunstens kasse
 | Rating (venstre) + primærposition under den | venstre 17 %, top 19,4 %, 12,2 cqw |
 | Alternative positioner (højre, stablet) | højre 12,5 %, top 24,2 %, 5,3 cqw |
 | Portræt | bredde 60 %, klippet ved delelinjen 63,4 % |
-| Navn | top 62,2 %, 7,4 cqw |
-| Statlinjer | 16–84 %, top 68,3 %, etiket 3,7 cqw, tal 7,2 cqw (ingen streg) |
-| Nations- og klublogo | top 78,6 %, 6,3 cqw |
-| Fod, tricks, svag fod | top 85,2 %, 3,7 cqw |
+| Navn | top 65,2 %, 7,4 cqw |
+| Statlinjer | 16–84 %, top 72 %, etiket 3,7 cqw, tal 7,2 cqw (ingen streg) |
+| Nations- og klublogo | top 81,6 %, 6,3 cqw |
+
+Fod, tricks og svagt ben står **ikke** på kortet — de hører til blandt
+metabrikkerne på spillersiden. Uden dem fordeler navn, stats og logoer sig over
+hele den flade guldbund fra 64 % til afsmalningen ved 86 %.
 
 Skjoldet står i fuld bredde (9,7–90,7 %) fra 25 % til 83 % nede og smalner brat
 efter 86 % — derfor er der ikke plads til mere under fodrækken.

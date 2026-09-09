@@ -198,8 +198,11 @@ h1,h2,h3{margin:0}
   font-style:normal;font-family:var(--cond);font-weight:800;font-size:5.3cqw;line-height:1.3;
   background:rgba(255,255,255,.42);border-radius:1.4cqw;padding:0 1.7cqw;
 }
+/* Bunden af kortet: navn, stats og logoer fordelt over den flade guldbund
+   fra 64 % til skjoldets afsmalning ved 86 %. Fod, tricks og svagt ben
+   står ikke på kortet — de hører til på spillersiden. */
 .k-name{
-  left:10%;right:10%;top:62.2%;z-index:1;text-align:center;
+  left:10%;right:10%;top:65.2%;z-index:1;text-align:center;
   font-family:var(--cond);font-weight:800;font-size:7.4cqw;line-height:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
@@ -208,15 +211,13 @@ h1,h2,h3{margin:0}
    omkring 61-64 % nede. En CSS-streg oveni giver kortet en linje, EA's
    eget kort ikke har. */
 .k-stats{
-  left:16%;right:16%;top:68.3%;z-index:1;
+  left:16%;right:16%;top:72%;z-index:1;
   display:grid;grid-template-columns:repeat(6,1fr);column-gap:.5%;
 }
 .k-k{font-family:var(--cond);font-weight:800;font-size:3.7cqw;line-height:1;text-align:center}
 .k-v{font-family:var(--cond);font-weight:700;font-size:7.2cqw;line-height:1;text-align:center;padding-top:.7cqw}
-.k-badges{left:0;right:0;top:78.6%;z-index:1;display:flex;justify-content:center;gap:3.6cqw}
+.k-badges{left:0;right:0;top:81.6%;z-index:1;display:flex;justify-content:center;gap:3.6cqw}
 .k-badges img{width:6.3cqw;height:6.3cqw;object-fit:contain}
-.k-foot{left:0;right:0;top:85.2%;z-index:1;display:flex;justify-content:center;gap:4.5cqw;opacity:.85}
-.k-foot i{font-style:normal;font-family:var(--cond);font-weight:800;font-size:3.7cqw;line-height:1}
 
 /* ---------- Spillere ---------- */
 .crumb{font-size:13px;font-weight:600;color:var(--ink5);padding-top:26px}
@@ -767,7 +768,6 @@ function cardHTML(p){
     '<span class="k-name">'+esc(shortName(p))+'</span>'+
     '<span class="k-stats">'+keys+vals+'</span>'+
     (badges ? '<span class="k-badges">'+badges+'</span>' : '')+
-    '<span class="k-foot"><i>'+(p[FOOT]===2?'V':'H')+'</i><i>'+p[SKILLS]+'★</i><i>'+p[WEAK]+'★</i></span>'+
   '</a>';
 }
 
