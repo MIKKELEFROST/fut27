@@ -369,8 +369,19 @@ indhold.** Mål geometrien i browseren (`getBoundingClientRect`), når noget
 opfører sig mærkeligt, frem for at gætte ud fra CSS'en.
 
 Vær også opmærksom på **klassenavne der kolliderer**: `.dl` som både
-definitionsliste og delta-celle gav den ene komponent den andens ramme. I én
-stor fil er der ingen scoping til at fange det.
+definitionsliste og delta-celle gav den ene komponent den andens ramme, og
+`.mini` som både kortminiature og filterknap slugte kortets baggrund helt. I én
+stor fil er der ingen scoping til at fange det. Er en komponent uforklarligt
+forkert, så list de regler der faktisk matcher elementet:
+
+    [...document.styleSheets].flatMap(s=>[...s.cssRules])
+      .filter(r=>r.selectorText && el.matches(r.selectorText))
+
+**Hotlinkede billeder kan være lettere end de ser ud.** EA's billed-CDN laver
+content negotiation: samme `.png`-URL svarer med AVIF på 57 KB i stedet for
+334 KB, når kaldet sender et almindeligt browser-`Accept`-hoved. Mål vægten med
+browserens eget hoved, ikke med `curl` uden — ellers regner man sig frem til at
+en side vejer 4,8 MB, når den vejer 860 KB.
 
 ---
 

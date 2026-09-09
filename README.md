@@ -180,6 +180,12 @@ adskillelse indbygget: kunsten skifter fra mønster til flad guldbund omkring
 61–64 % nede, og navnet står lige under skiftet. En CSS-streg oveni giver
 kortet en linje, EA's eget kort ikke har.
 
+Tabellen på **Spillere** viser samme kort som miniature yderst til venstre i
+hver række — kun skabelon og portræt, for ved 46 px ville ratingen stå på fem
+pixel, og rækken har den i forvejen i sin egen kolonne. Klassen hedder
+`k-mini` og ikke `mini`, fordi `.mini` allerede er filterpanelernes
+hurtigvalg-knapper.
+
 Portrættet hotlinkes fra EA's CDN. Billederne er 512×512 med hovedtop ved
 10,7 %, hage ved ca. 72 % og skuldrene flugtende med underkanten;
 `padding`-parameteren på CDN'et gør ingen forskel, der findes kun det ene
@@ -188,6 +194,12 @@ til den, og bredden 60 % giver hovedet samme placering på kortet som på et
 rigtigt FC-kort. Slår billedet fejl, falder kortet tilbage til en cirkel med
 spillerens initialer (`futFace()` sætter `has-face` ved `onload` og fjerner
 billedet ved `onerror`).
+
+**EA's CDN laver content negotiation.** Samme `.png`-URL svarer med AVIF, når
+kaldet sender et almindeligt browser-`Accept`-hoved — 57 KB i snit mod 334 KB
+som PNG. En tabelside med 15 portrætter vejer derfor ~860 KB, ikke 4,8 MB.
+Resize-parametre (`?width=`, `?resize=`) ignoreres, og der findes ingen mindre
+udgave af stien: `/small/`, `/thumb/` og `/medium/` svarer alle 403.
 
 ## Hvorfor er data bundlet i stedet for hentet live?
 
