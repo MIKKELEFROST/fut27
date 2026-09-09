@@ -186,6 +186,13 @@ pixel, og rækken har den i forvejen i sin egen kolonne. Klassen hedder
 `k-mini` og ikke `mini`, fordi `.mini` allerede er filterpanelernes
 hurtigvalg-knapper.
 
+Kortcellen er `position:sticky` i venstre kant. Tabellen er 880 px bred og
+scroller vandret på mobil (352 px synligt), og uden det stod man med seks tal
+uden at vide hvis de var. Cellen skal have `align-self:stretch` og en
+uigennemsigtig baggrund der følger rækkens hover — kortets kunst er
+gennemsigtig langs kanterne, og `.tr` centrerer sine celler, så de ellers ikke
+strækker sig over rækkens højde.
+
 Portrættet hotlinkes fra EA's CDN. Billederne er 512×512 med hovedtop ved
 10,7 %, hage ved ca. 72 % og skuldrene flugtende med underkanten;
 `padding`-parameteren på CDN'et gør ingen forskel, der findes kun det ene
